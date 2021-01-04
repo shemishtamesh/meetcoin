@@ -9,15 +9,13 @@ def sha256_hash(*args):
 
 class Block:
     def __init__(self,
-                 time=datetime.now(),
+                 time="0000-00-00 00:00:00.000000",
                  prev_hash=None,
-                 hash=sha256_hash(datetime.now(), None, []),
                  data=[],
                  validator=None,
                  signature=None):
         self.time = time
         self.prev_hash = prev_hash
-        self.hash = hash
         self.data = data
         self.validator = validator
         self.signature = signature
@@ -25,7 +23,7 @@ class Block:
     def __str__(self):
         return f"created at: {self.time}\n"\
               +f"previous hash: {self.prev_hash}\n"\
-              +f"current hash: {self.hash}\n"\
+              +f"current hash: {self.hash_block()}\n"\
               +f"data: {self.data}\n"\
               +f"validator: {self.validator}\n"\
               +f"signature: {self.signature}\n"
@@ -44,13 +42,12 @@ class Blockchain():
         ret_str = ""
         for indx, block in enumerate(self.chain):
             ret_str += f"block number: {indx}\n{block}\n"
-        return ret_str
+        return ret_str[:-1]
 
     def next_block(self, data):
         time = datetime.now()
         prev_hash = self.chain[-1].hash_block()
-        curr_hash = sha256_hash(time, prev_hash, data)
-        block = Block(time, prev_hash, curr_hash, data)
+        block = Block(time, prev_hash, data)
         self.chain.append(block)
         return block
 
@@ -67,13 +64,12 @@ class Blockchain():
 
     @staticmethod
     def is_chain_valid(chain):
-        if chain[0] != Block():
+        if str(chain[0]) != str(Block()):
             return False
         for i in range(1, len(chain)):
             curr_block = chain[i]
             prev_block = chain[i-1]
-            if curr_block.hash != curr_block.hash_block() or\
-                    curr_block.prev_hash != prev_block.hash:
+            if curr_block.prev_hash != prev_block.hash_block():
                 return False
         return True
 
