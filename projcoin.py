@@ -10,11 +10,11 @@ def sha256_hash(*args):
 class Block:
     def __init__(self,
                  time=datetime.now(),
-                 prev_hash="0"*64,
-                 hash=sha256_hash(datetime.now(), '0'*64, []),
+                 prev_hash=None,
+                 hash=sha256_hash(datetime.now(), None, []),
                  data=[],
-                 validator="",
-                 signature=""):
+                 validator=None,
+                 signature=None):
         self.time = time
         self.prev_hash = prev_hash
         self.hash = hash
@@ -54,6 +54,14 @@ class Blockchain():
         self.chain.append(block)
         return block
 
+    def replace_chain(self, new_chain):
+        if len(new_chain) > len(self.chain) and\
+                self.is_chain_valid(new_chain):
+            self.chain = new_chain
+            return True
+        else:
+            return False
+
     def is_valid(self):
         return self.is_chain_valid(self.chain)
 
@@ -69,19 +77,8 @@ class Blockchain():
                 return False
         return True
 
-    def replace_chain(self, new_chain):
-        if len(new_chain) > len(self.chain) and\
-                self.is_chain_valid(new_chain):
-            self.chain = new_chain
-            return True
-        else:
-            return False
-
 def main():
-    blockchain = Blockchain()
-    blockchain.next_block(["test0", "test1", "test2"])
-    print(blockchain)
-
+    pass
 
 if __name__ == "__main__":
     main()
