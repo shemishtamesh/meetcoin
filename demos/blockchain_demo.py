@@ -1,5 +1,6 @@
-from projcoin import Block
-from projcoin import Blockchain
+from meetcoin import Block
+from meetcoin import Blockchain
+
 #from projcoin import sha256_hash
 def main():
     print(f"####################### creating a chian ########################\n")
@@ -13,14 +14,14 @@ def main():
 
     print(f"####################### failing to replace the chain ########################\n")
     blockchain1 = Blockchain()
-    blockchain.replace_chain(blockchain1.chain)
+    blockchain.replace_chain_if_more_reliable(blockchain1.chain)
     print(blockchain)
 
     print(f"####################### replacing the chain ########################\n")
     blockchain1.next_block(["a", "b", "c", "d"])
     blockchain1.next_block(["1", "2", "3", "4"])
     blockchain1.next_block(["1", "2", "3", "4"])
-    blockchain.replace_chain(blockchain1.chain)
+    blockchain.replace_chain_if_more_reliable(blockchain1.chain)
     print(blockchain)
 
 if __name__ == "__main__":
