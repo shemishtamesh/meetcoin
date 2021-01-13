@@ -83,7 +83,12 @@ class Wallet():
     pass
 
 def main():
-    pass
+    c = Blockchain()
+    b = c.next_block("test data")
+    b.time = "2021-01-11 12:51:28.883485"
 
+    block = Block("2021-01-11 12:51:28.883485", Block().hash_block(), "test data", None, None)
+    print(block)
+    print(b)
 if __name__ == "__main__":
     main()
