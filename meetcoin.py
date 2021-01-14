@@ -1,12 +1,25 @@
-from hashlib import sha256
+from Crypto.Hash import SHA256
+import uuid
 from datetime import datetime
 
 def sha256_hash(*args):
-    """return a sha256 hash of a concatenation input"""
+    """return a sha256 hash of a concatenation of the input input"""
     str_rep = ""
     for arg in args:
         str_rep += str(arg)
-    return sha256(str_rep.encode()).hexdigest()
+    return SHA256.new(str_rep.encode()).hexdigest()
+
+class Transaction:
+    def __init__(self, reciver, amount):
+        self.id = uuid.uuid4()
+        self.time = datetime.now()
+        self.signature = "" #
+        self.receiver = reciver
+        self.amount = amount
+        self.fee = ""
+
+    def is_valid(self):
+        pass
 
 class Block:
     def __init__(self,
@@ -80,15 +93,13 @@ class Blockchain():
         return True
 
 class Wallet():
-    pass
+    def __init__(self):
+        self.public = ""
+        self.secret = ""
+
 
 def main():
-    c = Blockchain()
-    b = c.next_block("test data")
-    b.time = "2021-01-11 12:51:28.883485"
+    pass
 
-    block = Block("2021-01-11 12:51:28.883485", Block().hash_block(), "test data", None, None)
-    print(block)
-    print(b)
 if __name__ == "__main__":
     main()
