@@ -1,8 +1,13 @@
-from Crypto.Hash import SHA256 #Secure Hash Algorithm (of size) 256 (bits)
-from Crypto.PublicKey import ECC #Eliptic Curve Cryptography
-from Crypto.Signature import DSS #Digital Stardart Signature
-import uuid
+from Crypto.Hash import SHA256  # Secure Hash Algorithm (of size) 256 (bits)
+from Crypto.PublicKey import ECC  # Eliptic Curve Cryptography
+from Crypto.Signature import DSS  # Digital Stardard Signature
+import uuid  # Universally Uniqe IDentifier
+import re  # for regex
 from datetime import datetime
+
+CURVE_FOR_KEYS = 'NIST P-256'
+STANDARD_FOR_SIGNATURES = 'fips-186-3'
+
 
 def sha256_hash(*args):
     """return a sha256 hash of a concatenation of the input input"""
@@ -15,28 +20,76 @@ def sha256_hash(*args):
 class Transaction:
     def __init__(self,
                  receiver,
+                 sender,
                  amount,
                  signature,
-                 id = uuid.uuid4(),
-                 time = datetime.now()):
+                 id=uuid.uuid4(),
+                 time=datetime.now()):
         self.id = id
         self.time = time
         self.signature = signature  # signature of the wallet that looses money from the transaction
+        self.sender = sender
         self.receiver = receiver
         self.amount = amount
         self.fee = 0
 
     def is_valid(self):
         """returns true iff the transaction is valid"""
-        pass
+        # check signature against sender and rest of transaction:
+        hash_of_transaction = self.hash_transaction()
+        verifier = DSS.new(self.sender, STANDARD_FOR_SIGNATURES)
+        try:
+            verifier.verify(hash_of_transaction, self.signature)
+        except ValueError:
+            return False
+
+        # check if the amount can be sent by sender:
+        # get all transactions that include the adress from self.blockchain
+        # calculate the balance of the adress from those transactions
+
+        # check if the id is valid:
+        regex_for_uuids = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        if not re.match(regex_for_uuids, str(self.id)):
+            return False
+
+        # check if the receiver is valid:
+        p = 115792089210356248762697446949407573530086143415290314195533631308867097853951
+        b = 41058363725152142129326129780047268409114441015993725554835256314039467401291
+        a = -3
+        try:
+            x = int(self.receiver.pointQ.x)
+            y = int(self.receiver.pointQ.y)
+        except AttributeError:
+            return False
+        if ((y ** 2) - ((x ** 3) - (a * x) + b)) % p == 0:
+            return False
+
+        # check if sender address is valid:
+        try:
+            x = int(self.sender.pointQ.x)
+            y = int(self.sender.pointQ.y)
+        except AttributeError:
+            return False
+        if ((y ** 2) - ((x ** 3) - (a * x) + b)) % p == 0:
+            return False
+
+        # check if fee is valid:
+        pass  # TODO: change this (hadn't decided on a fee rate yet)
+
+        return True
 
     def __str__(self):
-        return f"id: {self.id}\n"\
-              +f"time: {self.time}\n"\
-              +f"signature: {self.signature}\n"\
-              +f"reveiver: {self.receiver}\n"\
-              +f"amount: {self.amount}\n"\
-              +f"fee: {self.fee}\n"
+        return f"id: {self.id}\n" \
+               + f"time: {self.time}\n" \
+               + f"signature: {self.signature}\n" \
+               + f"sender: {self.sender}\n" \
+               + f"reveiver: {self.receiver}\n" \
+               + f"amount: {self.amount}\n" \
+               + f"fee: {self.fee}\n"
+
+    def hash_transaction(self):
+        return sha256_hash(self.id, self.time, self.sender, self.receiver, self.amount, self.fee)
+
 
 class Block:
     def __init__(self,
@@ -111,23 +164,25 @@ class Blockchain:
 
 class Wallet:
     def __init__(self):
-        self.secret_key = ECC.generate(curve='NIST P-256')  # secret key = private key
+        self.secret_key = ECC.generate(curve=CURVE_FOR_KEYS)  # secret key = private key
         self.public_key = self.secret_key.public_key()
+        self.blockchain = []
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (public key) and an amount, returns a transaction"""
         id = uuid.uuid4()
         time = datetime.now()
-        fee = 0 #TODO: change this
-        transaction_hash = sha256_hash(id, time, receiver, amount, fee)
-        signer = DSS.new(self.secret_key, 'fips-186-3')
+        sender = self.public_key
+        fee = 0  # TODO: change this
+        transaction_hash = sha256_hash(id, time, sender, receiver, amount, fee)
+        signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
         signature = signer.sign(transaction_hash)
-        return Transaction(receiver, amount, signature, id, time)
+        return Transaction(receiver, sender, amount, signature, id, time)
 
 
 def main():
-    w1 = Wallet()
-    print(w1.make_transaction("demo_receiver", 100))
+    pass
+
 
 if __name__ == "__main__":
     main()
