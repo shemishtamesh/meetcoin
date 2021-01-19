@@ -43,9 +43,9 @@ class Transaction:
         except ValueError:
             return False
 
-        # check if the amount can be sent by sender:
-        # get all transactions that include the adress from self.blockchain
-        # calculate the balance of the adress from those transactions
+        # check if the amount can be sent by sender: # TODO: implement this, decide on how to get the blockchain
+        # get all transactions that include the address from self.blockchain
+        # calculate the balance of the address from those transactions
 
         # check if the id is valid:
         regex_for_uuids = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$"
@@ -74,7 +74,7 @@ class Transaction:
             return False
 
         # check if fee is valid:
-        pass  # TODO: change this (hadn't decided on a fee rate yet)
+        pass  # TODO: change this (hadn't decided on a fee system yet)
 
         return True
 
@@ -116,6 +116,9 @@ class Block:
         """returns the hash of the block"""
         # return sha256_hash(self.time, self.prev_hash, self.data, self.validator, self.signature)
         return sha256_hash(self.time, self.prev_hash, self.data)
+
+    def is_valid(self):
+        pass #TODO: impliment this
 
 
 class Blockchain:
@@ -163,8 +166,8 @@ class Blockchain:
 
 
 class Wallet:
-    def __init__(self):
-        self.secret_key = ECC.generate(curve=CURVE_FOR_KEYS)  # secret key = private key
+    def __init__(self, secret_key=ECC.generate(curve=CURVE_FOR_KEYS)):
+        self.secret_key = secret_key # secret key = private key
         self.public_key = self.secret_key.public_key()
         self.blockchain = []
 
@@ -173,15 +176,22 @@ class Wallet:
         id = uuid.uuid4()
         time = datetime.now()
         sender = self.public_key
-        fee = 0  # TODO: change this
+        fee = 0  # TODO: change this to the decided fee system
         transaction_hash = sha256_hash(id, time, sender, receiver, amount, fee)
         signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
         signature = signer.sign(transaction_hash)
         return Transaction(receiver, sender, amount, signature, id, time)
 
+    def __str__(self):
+        return f"secret_key: {self.secret_key}"\
+              +f"public_key: {self.public_key}"\
+              +f"blockchain: {self.blockchain}"
+
+
 
 def main():
-    pass
+    w = Wallet()
+    print(type(w.make_transaction("a", 0).hash_transaction()))
 
 
 if __name__ == "__main__":
