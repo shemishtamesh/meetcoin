@@ -5,6 +5,7 @@ import uuid  # Universally Uniqe IDentifier
 import re  # for regex
 from datetime import datetime
 
+
 CURVE_FOR_KEYS = 'NIST P-256'
 STANDARD_FOR_SIGNATURES = 'fips-186-3'
 
@@ -28,12 +29,12 @@ class Transaction:
         self.id = id
         self.time = time
         self.signature = signature  # signature of the wallet that looses money from the transaction
-        self.sender = sender
-        self.receiver = receiver
+        self.sender = sender # sender's wallet's public key
+        self.receiver = receiver # receiver's wallet's public key
         self.amount = amount
         self.fee = 0
 
-    def is_valid(self):
+    def is_valid(self, blockchain):
         """returns true iff the transaction is valid"""
         # check signature against sender and rest of transaction:
         hash_of_transaction = self.hash_transaction()
@@ -43,9 +44,9 @@ class Transaction:
         except ValueError:
             return False
 
-        # check if the amount can be sent by sender: # TODO: implement this, decide on how to get the blockchain
-        # get all transactions that include the address from self.blockchain
-        # calculate the balance of the address from those transactions
+        # check if the amount can be sent by sender:
+        if blockchain.get_balance(self.sender) < self.amount:
+            return False
 
         # check if the id is valid:
         regex_for_uuids = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$"
@@ -164,12 +165,27 @@ class Blockchain:
                 return False
         return True
 
+    def get_balance(self, public_key):
+        ret_value = 0
+        for block in self.chain:
+            if block.validator == public_key:
+                ret_value += block.fee
+
+            for transaction in block.data:
+                if transaction.receiver == public_key:
+                    ret_value += (transaction.amount - block.fee)
+
+                elif transaction.sender == public_key:
+                    ret_value -= (transaction.amount - block.fee)
+
+        return ret_value
+
 
 class Wallet:
     def __init__(self, secret_key=ECC.generate(curve=CURVE_FOR_KEYS)):
         self.secret_key = secret_key # secret key = private key
         self.public_key = self.secret_key.public_key()
-        self.blockchain = []
+        self.blockchain = Blockchain() # TODO: change this to object Blockchain
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (public key) and an amount, returns a transaction"""
@@ -188,11 +204,8 @@ class Wallet:
               +f"blockchain: {self.blockchain}"
 
 
-
 def main():
-    w = Wallet()
-    print(type(w.make_transaction("a", 0).hash_transaction()))
+    pass
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
