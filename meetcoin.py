@@ -3,14 +3,14 @@ from Crypto.PublicKey import ECC  # Eliptic Curve Cryptography
 from Crypto.Signature import DSS  # Digital Stardard Signature
 import uuid  # Universally Uniqe IDentifier
 import re  # for regex
-from datetime import datetime
 
 
-CURVE_FOR_KEYS = 'NIST P-256'
-STANDARD_FOR_SIGNATURES = 'fips-186-3'
-STAKE_ADDRESS = "STAKE_ADDRESS"
-TRANSACTION_FEE = 1
-EXPORT_IMPORT_KEY_FORMAT = 'PEM'
+class Constants:
+    CURVE_FOR_KEYS = 'NIST P-256'
+    STANDARD_FOR_SIGNATURES = 'fips-186-3'
+    STAKE_ADDRESS = "STAKE_ADDRESS"
+    TRANSACTION_FEE = 1
+    EXPORT_IMPORT_KEY_FORMAT = 'PEM'
 
 
 def sha256_hash(*args):
@@ -18,7 +18,7 @@ def sha256_hash(*args):
     str_rep = ""
     for arg in args:
         str_rep += str(arg)
-    return SHA256.new(str_rep.encode())
+    return SHA256.new(str_rep.encode()).hexdigest()
 
 
 class Transaction:
@@ -27,21 +27,19 @@ class Transaction:
                  sender,
                  amount,
                  signature,
-                 id=uuid.uuid4(),
-                 time=datetime.now()):
+                 id=str(uuid.uuid4())):
         self.id = id
-        self.time = time
         self.signature = signature  # signature of the wallet that looses money from the transaction
         self.sender = sender # sender's wallet's public key
         self.receiver = receiver # receiver's wallet's public key
         self.amount = amount
-        self.fee = TRANSACTION_FEE
+        self.fee = Constants.TRANSACTION_FEE
 
     def is_valid(self, blockchain):
         """returns true iff the transaction is valid"""
         # check signature against sender and rest of transaction:
         hash_of_transaction = self.hash_transaction()
-        verifier = DSS.new(ECC.import_key(self.sender), STANDARD_FOR_SIGNATURES)
+        verifier = DSS.new(ECC.import_key(self.sender), Constants.STANDARD_FOR_SIGNATURES)
         try:
             verifier.verify(hash_of_transaction, eval(self.signature))
         except ValueError:
@@ -58,7 +56,7 @@ class Transaction:
 
         # check if the receiver and sender are valid (if it's a point on the elliptic curve):
         # is receiver valid:
-        if self.receiver != STAKE_ADDRESS:
+        if self.receiver != Constants.STAKE_ADDRESS:
             receiver_key = ECC.import_key(self.receiver)
             p = 115792089210356248762697446949407573530086143415290314195533631308867097853951
             b = 41058363725152142129326129780047268409114441015993725554835256314039467401291
@@ -81,18 +79,17 @@ class Transaction:
         if ((y ** 2) - ((x ** 3) - (a * x) + b)) % p == 0:
             return False
 
-        if self.receiver == STAKE_ADDRESS and self.amount <= 0: # check if valid for stake transaction:
+        if self.receiver == Constants.STAKE_ADDRESS and self.amount <= 0: # check if valid for stake transaction:
             return False
 
         # check if fee is valid:
-        if int(self.fee) != TRANSACTION_FEE:
+        if int(self.fee) != Constants.TRANSACTION_FEE:
             return False
 
         return True
 
     def __str__(self):
         return f"id: {self.id}\n" \
-               + f"time: {self.time}\n" \
                + f"signature: {self.signature}\n" \
                + f"sender: {self.sender}\n" \
                + f"receiver: {self.receiver}\n" \
@@ -100,25 +97,24 @@ class Transaction:
                + f"fee: {self.fee}\n"
 
     def hash_transaction(self):
-        return sha256_hash(self.id, self.time, self.sender, self.receiver, self.amount, self.fee)
+        return sha256_hash(self.id, self.sender, self.receiver, self.amount, self.fee)
 
 
 class Block:
-    # TODO: change block.time to block.number
     def __init__(self,
-                 time="0000-00-00 00:00:00.000000",
-                 prev_hash=None,
-                 data=[],
-                 validator=None,
-                 signature=None):
-        self.time = time
+                 number="0",
+                 prev_hash="",
+                 data="",
+                 validator="",
+                 signature=""):
+        self.block_number = number
         self.prev_hash = prev_hash
         self.data = data
         self.validator = validator
         self.signature = signature
 
     def __str__(self):
-        return f"created at: {self.time}\n" \
+        return f"created at: {self.block_number}\n" \
                + f"previous hash: {self.prev_hash}\n" \
                + f"current hash: {self.hash_block()}\n" \
                + f"data: {self.data}\n" \
@@ -127,8 +123,7 @@ class Block:
 
     def hash_block(self):
         """returns the hash of the block"""
-        # return sha256_hash(self.time, self.prev_hash, self.data, self.validator, self.signature) #TODO: decide if uncomment this
-        return sha256_hash(self.time, self.prev_hash, self.data)
+        return sha256_hash(self.block_number, self.prev_hash, self.data, self.validator, self.signature)
 
     def is_valid(self):
         pass #TODO: impliment this
@@ -146,9 +141,9 @@ class Blockchain:
 
     def next_block(self, data):
         """creates the next block in the chain, add it to the chain, and return it"""
-        time = str(datetime.now())
+        block_number = str(int(self.chain[-1].block_number) + 1)
         prev_hash = self.chain[-1].hash_block()
-        block = Block(time, prev_hash, data)
+        block = Block(block_number, prev_hash, data)
         self.chain.append(block)
         return block
 
@@ -181,7 +176,7 @@ class Blockchain:
         ret_value = 0
         for block in self.chain:
             for transaction in block.data:
-                if transaction.receiver != STAKE_ADDRESS:
+                if transaction.receiver != Constants.STAKE_ADDRESS:
                     if block.validator == public_key:
                         ret_value += transaction.fee
 
@@ -198,7 +193,7 @@ class Blockchain:
         validators = {}
         for block in self.chain:
             for transaction in block.data:
-                if transaction.receiver == STAKE_ADDRESS:
+                if transaction.receiver == Constants.STAKE_ADDRESS:
                     if not (transaction.sender in validators):
                         validators[transaction.sender] = transaction.amount
                     else:
@@ -212,25 +207,24 @@ class Blockchain:
 
 
 class Wallet:
-    def __init__(self, secret_key=ECC.generate(curve=CURVE_FOR_KEYS)):
+    def __init__(self, secret_key=ECC.generate(curve=Constants.CURVE_FOR_KEYS)):
         self.secret_key = secret_key # secret key = private key
         self.public_key = self.secret_key.public_key()
         self.blockchain = Blockchain()
         self.transaction_pool = []
 
     def hash_for_block_signature(self, block):
-        return sha256_hash(block.time, block.prev_hash, block.data, self.public_key)
+        return sha256_hash(block.block_number, block.prev_hash, block.data, self.public_key)
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (int), returns a transaction (Transaction)"""
         id = str(uuid.uuid4())
-        time = str(datetime.now())
-        sender = self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT)
-        fee = str(TRANSACTION_FEE)
-        transaction_hash = sha256_hash(id, time, sender, receiver, amount, fee)
-        signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
+        sender = self.public_key.export_key(format=Constants.EXPORT_IMPORT_KEY_FORMAT)
+        fee = str(Constants.TRANSACTION_FEE)
+        transaction_hash = sha256_hash(id, sender, receiver, amount, fee)
+        signer = DSS.new(self.secret_key, Constants.STANDARD_FOR_SIGNATURES)
         signature = str(signer.sign(transaction_hash))
-        return Transaction(receiver, sender, amount, signature, id, time)
+        return Transaction(receiver, sender, amount, signature, id)
 
     def __str__(self):
         return f"secret_key: {self.secret_key}"\
@@ -239,14 +233,7 @@ class Wallet:
 
 
 def main():
-    w=Wallet()
-    w1=Wallet()
-    t=w.make_transaction(str(w1.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT)), 1)
-    # for var in vars(t):
-    #     print(f"{var} - {type(var)}")
-    # print(t.signature)
-    print(t.is_valid())
-
+    pass
 
 if __name__ == "__main__":
     main()
