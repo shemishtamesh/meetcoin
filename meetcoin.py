@@ -2,7 +2,8 @@ from utils import *  # utils & constants
 from Crypto.PublicKey import ECC  # Elliptic Curve Cryptography
 from Crypto.Signature import DSS  # Digital Standard Signature
 import json  # for serialization
-from math import log
+from math import sqrt  # for choosing leader
+import socket  # for peer to peer interaction
 
 
 class Transaction:
@@ -20,7 +21,7 @@ class Transaction:
 
     def is_valid(self, blockchain):
         """returns true iff the transaction is valid"""
-        if self != Transaction() and self in blockchain.chain[0].data:  # unless initial transaction for initial coin offering
+        if not (self == Transaction() and self in blockchain.chain[0].data):  # unless initial transaction for initial coin offering
             # check signature against sender and rest of transaction:
             hash_of_transaction = self.hash_transaction()
             verifier = DSS.new(ECC.import_key(self.sender), STANDARD_FOR_SIGNATURES)
@@ -100,7 +101,7 @@ class Transaction:
 
 class Block:
     def __init__(self,
-                 number="0",
+                 number=0,
                  prev_hash="",
                  data="",
                  validator="",
@@ -129,18 +130,40 @@ class Block:
         return sha256_hash(self.block_number, self.prev_hash, self.data, self.validator, self.signature)
 
     def is_valid(self, blockchain):
-        if self != Block():
+        if self != Block():  # allow the genesis block
+            # check transactions:
             for transaction_json in self.data:
                 transaction = Transaction.deserialize(transaction_json)
                 if not transaction.is_valid(blockchain):
                     return False
 
+            # check signature:
             hash_of_block_content = sha256_hash(self.block_number, self.prev_hash, self.data)
             verifier = DSS.new(ECC.import_key(self.validator), STANDARD_FOR_SIGNATURES)
             try:
                 verifier.verify(hash_of_block_content, eval(self.signature))
             except ValueError:
                 return False
+
+            # check block number:
+            if self.block_number != blockchain.chain[-1].block_number + 1:
+                return False
+
+            # check if everyone can pay all for all transactions in block:
+            senders = {}
+            for transaction_json in self.data:
+                transaction = Transaction.deserialize(transaction_json)
+                if transaction.sender not in senders:
+                    senders[transaction.sender] = []
+                senders[transaction.sender].append(transaction)
+
+            for sender, transactions in senders.items():
+                senders_balance = blockchain.get_balance(sender)
+                total_amount = 0
+                for transaction in transactions:
+                    total_amount += (transaction.amount + transaction.fee)
+                if total_amount > senders_balance:
+                    return False
 
         return True
 
@@ -174,10 +197,9 @@ class Blockchain:
         """creates the next block in the chain, add it to the chain, and return it"""
         if not data:
             data = []
-        block_number = str(int(self.chain[-1].block_number) + 1)
+        block_number = self.chain[-1].block_number + 1
         prev_hash = self.chain[-1].hash_block().hexdigest()
         block = Block(block_number, prev_hash, data, validator, signature)
-        self.chain.append(block)
         return block
 
     def replace_chain_if_more_reliable(self, new_chain):
@@ -186,8 +208,7 @@ class Blockchain:
                 self.is_chain_valid(new_chain):
             self.chain = new_chain
             return True
-        else:
-            return False
+        return False
 
     def is_valid(self):
         """checks if the chain is valid and returns the result"""
@@ -224,7 +245,7 @@ class Blockchain:
         return ret_value
 
     def get_validators(self):
-        """returns a dict of all addresses that have coins staked and how many coins they have staked"""
+        """returns a dict of all addresses that have staked coins and how many coins they have staked"""
         validators = {}
         for block in self.chain:
             for transaction_json in block.data:
@@ -247,13 +268,19 @@ class Blockchain:
 
 
 class Wallet:
-    def __init__(self, secret_key=None, blockchain=Blockchain()):
+    def __init__(self, secret_key=None, blockchain=None):
         if not secret_key:  # secret key = private key
             self.secret_key = ECC.generate(curve=CURVE_FOR_KEYS)
         else:
             self.secret_key = secret_key
+
         self.public_key = self.secret_key.public_key()
-        self.blockchain = blockchain
+
+        if not blockchain:
+            self.blockchain = Blockchain()
+        else:
+            self.blockchain = blockchain
+
         self.transaction_pool = []
         self.proposed_blocks = []
 
@@ -261,7 +288,10 @@ class Wallet:
         return sha256_hash(block.block_number, block.prev_hash, block.data, self.public_key)
 
     def add_transaction_to_pool(self, transaction):
-        self.transaction_pool.append(transaction)
+        if Transaction.deserialize(transaction).is_valid():
+            self.transaction_pool.append(transaction)
+            return True
+        return False
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (float), returns a transaction (Transaction)"""
@@ -274,14 +304,14 @@ class Wallet:
         return self.transaction_pool[-1]
 
     def make_block(self):
-        new_block = self.blockchain.next_block(self.transaction_pool)
-        block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)
+        new_block = self.blockchain.next_block(self.transaction_pool[:MAX_TRANSACTIONS_IN_BLOCK])
+        block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)  # for signature, not really the block's hash
         signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
         signature = str(signer.sign(block_hash))
         new_block.validator = self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT)
         new_block.signature = signature
         self.transaction_pool = []
-        self.proposed_blocks.append(new_block)
+        self.add_proposed_block(new_block)
         return new_block
 
     def add_proposed_block(self, block):
@@ -289,7 +319,7 @@ class Wallet:
 
     def add_a_block_to_chain(self):
         for block in self.proposed_blocks:
-            if block.is_valid(self.blockchain) and block.validator == self.get_leader:
+            if block.is_valid(self.blockchain) and block.validator == self.get_leader():
                 self.blockchain.chain.append(block)
                 self.transaction_pool = []
                 self.proposed_blocks = []
@@ -302,9 +332,12 @@ class Wallet:
         block_hash_values = [int(block.hash_block().hexdigest(), 16) for block in self.proposed_blocks]
         validator_values = {}
         for value, block in zip(block_hash_values, self.proposed_blocks):
-            validator_values[block.validator] = value * log(validators[block.validator], 2)
+            validator_values[block.validator] = value * sqrt(validators[block.validator])
 
-        return max(validator_values, key=(lambda key: validator_values[key]))
+        if validator_values:
+            return max(validator_values, key=(lambda key: validator_values[key]))
+        else:
+            return None
 
     def get_balance(self):
         return self.blockchain.get_balance(self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT))
