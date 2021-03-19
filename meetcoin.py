@@ -1,9 +1,8 @@
-from utils import *  # utils & constants
+from meetcoin_utils import *  # utils & constants
 from Crypto.PublicKey import ECC  # Elliptic Curve Cryptography
 from Crypto.Signature import DSS  # Digital Standard Signature
 import json  # for serialization
 from math import sqrt  # for choosing leader
-import socket  # for peer to peer interaction
 
 
 class Transaction:
@@ -60,19 +59,18 @@ class Transaction:
                 return False
 
             # check if amount is more than 0:
-            if self.amount <= 0:
+            if float(self.amount) <= 0:
                 return False
 
             # check if the amount can be sent by sender:
-            if blockchain.get_balance(self.sender) < (self.amount + self.fee):
+            if blockchain.get_balance(self.sender) < (float(self.amount) + float(self.fee)):
                 return False
 
             # check if transaction is a duplicate of an existing transaction:
             for block in blockchain.chain:
-               for transaction_json in block.data:
-                   transaction = Transaction.deserialize(transaction_json)
-                   if transaction == self:
-                       return False
+                for transaction in block.data:
+                    if transaction == self:
+                        return False
 
         return True
 
@@ -84,10 +82,12 @@ class Transaction:
                + f"fee: {self.fee}\n"
 
     def serialize(self):
+        """returns a json string of the transaction, can be used for sending."""
         return json.dumps(self.__dict__)
 
     @staticmethod
     def deserialize(data):
+        """takes a serialized (json string of a) transaction and returns a transaction object"""
         data_dict = json.loads(data)
         return Transaction(data_dict["receiver"],
                            data_dict["sender"],
@@ -96,6 +96,7 @@ class Transaction:
                            data_dict["fee"])
 
     def hash_transaction(self):
+        """returns a hash of the sender, receiver, amount, and fee"""
         return sha256_hash(self.sender, self.receiver, self.amount, self.fee)
 
 
@@ -109,8 +110,8 @@ class Block:
         self.block_number = number
         self.prev_hash = prev_hash
         if data == "":
-            first_transaction = Transaction().serialize()
-            second_transaction = INITIAL_STAKE_TRANSACTION
+            first_transaction = Transaction()
+            second_transaction = Transaction.deserialize(INITIAL_STAKE_TRANSACTION)
             self.data = [first_transaction, second_transaction]
         else:
             self.data = data
@@ -130,10 +131,10 @@ class Block:
         return sha256_hash(self.block_number, self.prev_hash, self.data, self.validator, self.signature)
 
     def is_valid(self, blockchain):
+        """returns true iff the block is valid"""
         if self != Block():  # allow the genesis block
             # check transactions:
-            for transaction_json in self.data:
-                transaction = Transaction.deserialize(transaction_json)
+            for transaction in self.data:
                 if not transaction.is_valid(blockchain):
                     return False
 
@@ -151,8 +152,7 @@ class Block:
 
             # check if everyone can pay all for all transactions in block:
             senders = {}
-            for transaction_json in self.data:
-                transaction = Transaction.deserialize(transaction_json)
+            for transaction in self.data:
                 if transaction.sender not in senders:
                     senders[transaction.sender] = []
                 senders[transaction.sender].append(transaction)
@@ -168,11 +168,24 @@ class Block:
         return True
 
     def serialize(self):
+        """returns a (json) string representation of the block"""
+        block_dict = self.__dict__
+        transaction_list = []
+        for transaction in block_dict["data"]:
+            transaction_list.append(transaction.serialize())
+        block_dict["data"] = transaction_list
         return json.dumps(self.__dict__)
 
     @staticmethod
     def deserialize(data):
+        """takes a json representation of a block and returns the represented block"""
         data_dict = json.loads(data)
+        transaction_json_list = data_dict["data"]
+        transaction_list = []
+        for transaction_json in transaction_json_list:
+            transaction_list.append(Transaction.deserialize(transaction_json))
+        data_dict["data"] = transaction_list
+
         return Block(data_dict["block_number"],
                      data_dict["prev_hash"],
                      data_dict["data"],
@@ -203,6 +216,7 @@ class Blockchain:
         return block
 
     def replace_chain_if_more_reliable(self, new_chain):
+        # TODO: update this to something secure, longer isn't necessarily more secure in pos
         """replaces the chain if the new chain is longer and valid"""
         if len(new_chain) > len(self.chain) and \
                 self.is_chain_valid(new_chain):
@@ -229,10 +243,10 @@ class Blockchain:
         return True
 
     def get_balance(self, public_key):
+        """gets a public_key and returns the balance associated with it"""
         ret_value = 0
         for block in self.chain:
-            for transaction_json in block.data:
-                transaction = Transaction.deserialize(transaction_json)
+            for transaction in block.data:
                 if block.validator == public_key:
                     ret_value += transaction.fee
 
@@ -248,8 +262,7 @@ class Blockchain:
         """returns a dict of all addresses that have staked coins and how many coins they have staked"""
         validators = {}
         for block in self.chain:
-            for transaction_json in block.data:
-                transaction = Transaction.deserialize(transaction_json)
+            for transaction in block.data:
                 if transaction.receiver == STAKE_ADDRESS:
                     if not (transaction.sender in validators):
                         validators[transaction.sender] = transaction.amount
@@ -259,10 +272,12 @@ class Blockchain:
         return validators
 
     def serialize(self):
+        """returns a json representation of the blockchain"""
         return json.dumps(self.__dict__)
 
     @staticmethod
     def deserialize(data):
+        """takes a json representation of a blockchain and returns a blockchain"""
         data_dict = json.loads(data)
         return Blockchain(data_dict["chain"])
 
@@ -285,39 +300,42 @@ class Wallet:
         self.proposed_blocks = []
 
     def hash_for_block_signature(self, block):
+        """returns a hash used for signing blocks"""
         return sha256_hash(block.block_number, block.prev_hash, block.data, self.public_key)
 
     def add_transaction_to_pool(self, transaction):
-        if Transaction.deserialize(transaction).is_valid():
+        """adds a transaction to the transaction pool if it's valid"""
+        if transaction.is_valid(self.blockchain):
             self.transaction_pool.append(transaction)
             return True
         return False
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (float), returns a transaction (Transaction)"""
-        sender = self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT)
+        sender = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
         fee = TRANSACTION_FEE
         transaction_hash = sha256_hash(sender, receiver, amount, fee)
         signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
         signature = str(signer.sign(transaction_hash))
-        self.add_transaction_to_pool(Transaction(receiver, sender, amount, signature, fee).serialize())
-        return self.transaction_pool[-1]
+        return Transaction(receiver, sender, amount, signature, fee)
 
     def make_block(self):
+        """makes a block, empties the transaction pool, and appends the proposed blocks list with the new block"""
         new_block = self.blockchain.next_block(self.transaction_pool[:MAX_TRANSACTIONS_IN_BLOCK])
         block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)  # for signature, not really the block's hash
         signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
         signature = str(signer.sign(block_hash))
-        new_block.validator = self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT)
+        new_block.validator = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
         new_block.signature = signature
         self.transaction_pool = []
-        self.add_proposed_block(new_block)
         return new_block
 
     def add_proposed_block(self, block):
+        """adds a block the the proposed blocks list"""
         self.proposed_blocks.append(block)
 
     def add_a_block_to_chain(self):
+        """adds a block from the proposed blocks to the blockchain iff the block is valid and its validator is the current leader, also empties the transaction pool and the proposed blocks list"""
         for block in self.proposed_blocks:
             if block.is_valid(self.blockchain) and block.validator == self.get_leader():
                 self.blockchain.chain.append(block)
@@ -328,6 +346,7 @@ class Wallet:
         return False
 
     def get_leader(self):
+        """returns the current leader"""
         validators = self.blockchain.get_validators()
         block_hash_values = [int(block.hash_block().hexdigest(), 16) for block in self.proposed_blocks]
         validator_values = {}
@@ -340,7 +359,8 @@ class Wallet:
             return None
 
     def get_balance(self):
-        return self.blockchain.get_balance(self.public_key.export_key(format=EXPORT_IMPORT_KEY_FORMAT))
+        """returns the balance of self"""
+        return self.blockchain.get_balance(self.public_key.export_key(format=PUBLIC_KEY_FORMAT))
 
     def __str__(self):
         return f"secret_key: {self.secret_key}"\
@@ -349,7 +369,8 @@ class Wallet:
 
 
 def main():
-    pass
+    alice = Wallet(ECC.import_key(INITIAL_COIN_HOLDER_SECRET))
+    print(alice.public_key.export_key(format=PUBLIC_KEY_FORMAT))
 
 
 if __name__ == "__main__":

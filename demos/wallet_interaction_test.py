@@ -69,6 +69,29 @@ class TestWalletInteraction(unittest.TestCase):
         self.assertEqual(charlie.blockchain.get_balance(bob_public), 1)
         self.assertEqual(charlie.get_balance(), 3)
 
+        #     title networking test
+        #
+        # note over alice:makes transaction1: amount=5, receiver=bob
+        # note over alice:makes block1: transaction1
+        # alice->bob:block: transaction1
+        # alice->charlie:block1: transaction
+        #
+        # note over alice:adds block1 to chain
+        # note over bob:adds block1 to chain
+        # note over charlie:adds block1 to chain
+        #
+        # note over bob:transaction2: amount=3, receiver=charlie
+        # alice->bob:transaction2
+        # bob->charlie:transaction2
+        #
+        # note over alice:makes block2: transaction2
+        # alice->bob:block2
+        # alice->charlie:block2
+        #
+        # note over alice:adds block2 to chain
+        # note over bob:adds block2 to chain
+        # note over charlie:adds block2 to chain
+
     def test_non_ich_leader_and_multi_transaction_block(self):  # ich = initial coin holder
         alice = Wallet(ECC.import_key(INITIAL_COIN_HOLDER_SECRET))
         bob = Wallet()
