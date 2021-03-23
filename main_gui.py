@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinQxDUJZ.ui'
+## Form generated from reading UI file 'meetcoinoUwoCp.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -22,27 +22,23 @@ class Ui_MainWindow(object):
 "background-color: rgb(53, 53, 53);")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
+        self.centralwidget.setStyleSheet(u"color:white")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setSpacing(0)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.frame_2 = QFrame(self.centralwidget)
-        self.frame_2.setObjectName(u"frame_2")
-        self.frame_2.setMinimumSize(QSize(0, 25))
-        self.frame_2.setMaximumSize(QSize(16777215, 25))
-        self.frame_2.setStyleSheet(u"background-color: rgb(43, 43, 43);")
-        self.frame_2.setFrameShape(QFrame.StyledPanel)
-        self.frame_2.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout_2 = QHBoxLayout(self.frame_2)
+        self.title_bar = QFrame(self.centralwidget)
+        self.title_bar.setObjectName(u"title_bar")
+        self.title_bar.setMinimumSize(QSize(0, 25))
+        self.title_bar.setMaximumSize(QSize(16777215, 25))
+        self.title_bar.setStyleSheet(u"background-color: rgb(43, 43, 43);")
+        self.title_bar.setFrameShape(QFrame.StyledPanel)
+        self.title_bar.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.title_bar)
         self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.label_6 = QLabel(self.frame_2)
-        self.label_6.setObjectName(u"label_6")
-
-        self.horizontalLayout_2.addWidget(self.label_6)
-
-        self.label = QLabel(self.frame_2)
+        self.label = QLabel(self.title_bar)
         self.label.setObjectName(u"label")
 
         self.horizontalLayout_2.addWidget(self.label)
@@ -51,23 +47,26 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
 
-        self.minimize_button = QPushButton(self.frame_2)
+        self.minimize_button = QPushButton(self.title_bar)
         self.minimize_button.setObjectName(u"minimize_button")
+        self.minimize_button.setMaximumSize(QSize(50, 16777215))
 
         self.horizontalLayout_2.addWidget(self.minimize_button)
 
-        self.maximize_button = QPushButton(self.frame_2)
+        self.maximize_button = QPushButton(self.title_bar)
         self.maximize_button.setObjectName(u"maximize_button")
+        self.maximize_button.setMaximumSize(QSize(50, 16777215))
 
         self.horizontalLayout_2.addWidget(self.maximize_button)
 
-        self.exit_button = QPushButton(self.frame_2)
+        self.exit_button = QPushButton(self.title_bar)
         self.exit_button.setObjectName(u"exit_button")
+        self.exit_button.setMaximumSize(QSize(50, 16777215))
 
         self.horizontalLayout_2.addWidget(self.exit_button)
 
 
-        self.verticalLayout_2.addWidget(self.frame_2)
+        self.verticalLayout_2.addWidget(self.title_bar)
 
         self.frame = QFrame(self.centralwidget)
         self.frame.setObjectName(u"frame")
@@ -99,11 +98,6 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addItem(self.verticalSpacer)
 
-        self.pushButton_2 = QPushButton(self.menu_frame)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-
-        self.verticalLayout_3.addWidget(self.pushButton_2)
-
         self.help_btn = QPushButton(self.menu_frame)
         self.help_btn.setObjectName(u"help_btn")
 
@@ -123,6 +117,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.tabWidget_2 = QTabWidget(self.blockchain_pg)
         self.tabWidget_2.setObjectName(u"tabWidget_2")
+        self.tabWidget_2.setStyleSheet(u"QTabWidget::pane { border: 0; }")
+        self.tabWidget_2.setTabShape(QTabWidget.Triangular)
         self.search_block_tab = QWidget()
         self.search_block_tab.setObjectName(u"search_block_tab")
         self.verticalLayout_5 = QVBoxLayout(self.search_block_tab)
@@ -208,15 +204,37 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.tabWidget_2)
 
-        self.treeWidget = QTreeWidget(self.blockchain_pg)
+        self.blockchain_tree = QTreeWidget(self.blockchain_pg)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"1");
-        self.treeWidget.setHeaderItem(__qtreewidgetitem)
-        self.treeWidget.setObjectName(u"treeWidget")
+        self.blockchain_tree.setHeaderItem(__qtreewidgetitem)
+        self.blockchain_tree.setObjectName(u"blockchain_tree")
+        self.blockchain_tree.header().setVisible(False)
 
-        self.verticalLayout_4.addWidget(self.treeWidget)
+        self.verticalLayout_4.addWidget(self.blockchain_tree)
 
         self.stackedWidget.addWidget(self.blockchain_pg)
+        self.help_pg = QWidget()
+        self.help_pg.setObjectName(u"help_pg")
+        self.verticalLayout_12 = QVBoxLayout(self.help_pg)
+        self.verticalLayout_12.setSpacing(0)
+        self.verticalLayout_12.setObjectName(u"verticalLayout_12")
+        self.verticalLayout_12.setContentsMargins(0, 0, 0, 0)
+        self.help_grid = QFrame(self.help_pg)
+        self.help_grid.setObjectName(u"help_grid")
+        self.help_grid.setFrameShape(QFrame.StyledPanel)
+        self.help_grid.setFrameShadow(QFrame.Raised)
+        self.gridLayout_2 = QGridLayout(self.help_grid)
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.label_20 = QLabel(self.help_grid)
+        self.label_20.setObjectName(u"label_20")
+
+        self.gridLayout_2.addWidget(self.label_20, 0, 0, 1, 1)
+
+
+        self.verticalLayout_12.addWidget(self.help_grid)
+
+        self.stackedWidget.addWidget(self.help_pg)
         self.my_wallet_pg = QWidget()
         self.my_wallet_pg.setObjectName(u"my_wallet_pg")
         self.verticalLayout_6 = QVBoxLayout(self.my_wallet_pg)
@@ -225,7 +243,9 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
         self.tabWidget = QTabWidget(self.my_wallet_pg)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.tabWidget.setTabShape(QTabWidget.Rounded)
+        self.tabWidget.setAutoFillBackground(False)
+        self.tabWidget.setStyleSheet(u"QTabWidget::pane { border: 0; }")
+        self.tabWidget.setTabShape(QTabWidget.Triangular)
         self.tabWidget.setUsesScrollButtons(True)
         self.tabWidget.setMovable(False)
         self.tabWidget.setTabBarAutoHide(True)
@@ -237,6 +257,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.frame_3 = QFrame(self.my_wallet_tab)
         self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setStyleSheet(u"")
         self.frame_3.setFrameShape(QFrame.StyledPanel)
         self.frame_3.setFrameShadow(QFrame.Raised)
         self.formLayout = QFormLayout(self.frame_3)
@@ -254,6 +275,7 @@ class Ui_MainWindow(object):
 
         self.label_3 = QLabel(self.frame_3)
         self.label_3.setObjectName(u"label_3")
+        self.label_3.setStyleSheet(u"")
 
         self.formLayout.setWidget(1, QFormLayout.LabelRole, self.label_3)
 
@@ -329,15 +351,15 @@ class Ui_MainWindow(object):
 
         self.formLayout_4.setWidget(1, QFormLayout.LabelRole, self.label_11)
 
-        self.lineEdit_2 = QLineEdit(self.frame_6)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.updated_contacts_name_in = QLineEdit(self.frame_6)
+        self.updated_contacts_name_in.setObjectName(u"updated_contacts_name_in")
 
-        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.lineEdit_2)
+        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.updated_contacts_name_in)
 
-        self.lineEdit_3 = QLineEdit(self.frame_6)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
+        self.updated_contacts_public_key_in = QLineEdit(self.frame_6)
+        self.updated_contacts_public_key_in.setObjectName(u"updated_contacts_public_key_in")
 
-        self.formLayout_4.setWidget(1, QFormLayout.FieldRole, self.lineEdit_3)
+        self.formLayout_4.setWidget(1, QFormLayout.FieldRole, self.updated_contacts_public_key_in)
 
         self.update_contact_btn = QPushButton(self.frame_6)
         self.update_contact_btn.setObjectName(u"update_contact_btn")
@@ -370,12 +392,6 @@ class Ui_MainWindow(object):
 
         self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_4)
 
-        self.contact_combox = QComboBox(self.frame_4)
-        self.contact_combox.setObjectName(u"contact_combox")
-        self.contact_combox.setEditable(False)
-
-        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.contact_combox)
-
         self.label_5 = QLabel(self.frame_4)
         self.label_5.setObjectName(u"label_5")
 
@@ -396,10 +412,15 @@ class Ui_MainWindow(object):
 
         self.formLayout_2.setWidget(2, QFormLayout.LabelRole, self.label_7)
 
-        self.lineEdit = QLineEdit(self.frame_4)
-        self.lineEdit.setObjectName(u"lineEdit")
+        self.password_in = QLineEdit(self.frame_4)
+        self.password_in.setObjectName(u"password_in")
 
-        self.formLayout_2.setWidget(2, QFormLayout.FieldRole, self.lineEdit)
+        self.formLayout_2.setWidget(2, QFormLayout.FieldRole, self.password_in)
+
+        self.transaction_receivers_name_lable = QLabel(self.frame_4)
+        self.transaction_receivers_name_lable.setObjectName(u"transaction_receivers_name_lable")
+
+        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.transaction_receivers_name_lable)
 
 
         self.verticalLayout_9.addWidget(self.frame_4)
@@ -411,21 +432,23 @@ class Ui_MainWindow(object):
         self.gridLayout.setSpacing(0)
         self.gridLayout.setObjectName(u"gridLayout")
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
-        self.treeWidget_3 = QTreeWidget(self.proposed_tab)
+        self.transaction_pool_tree = QTreeWidget(self.proposed_tab)
         __qtreewidgetitem1 = QTreeWidgetItem()
         __qtreewidgetitem1.setText(0, u"1");
-        self.treeWidget_3.setHeaderItem(__qtreewidgetitem1)
-        self.treeWidget_3.setObjectName(u"treeWidget_3")
+        self.transaction_pool_tree.setHeaderItem(__qtreewidgetitem1)
+        self.transaction_pool_tree.setObjectName(u"transaction_pool_tree")
+        self.transaction_pool_tree.header().setVisible(False)
 
-        self.gridLayout.addWidget(self.treeWidget_3, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.transaction_pool_tree, 1, 1, 1, 1)
 
-        self.treeWidget_2 = QTreeWidget(self.proposed_tab)
+        self.proposed_blocks_tree = QTreeWidget(self.proposed_tab)
         __qtreewidgetitem2 = QTreeWidgetItem()
         __qtreewidgetitem2.setText(0, u"1");
-        self.treeWidget_2.setHeaderItem(__qtreewidgetitem2)
-        self.treeWidget_2.setObjectName(u"treeWidget_2")
+        self.proposed_blocks_tree.setHeaderItem(__qtreewidgetitem2)
+        self.proposed_blocks_tree.setObjectName(u"proposed_blocks_tree")
+        self.proposed_blocks_tree.header().setVisible(False)
 
-        self.gridLayout.addWidget(self.treeWidget_2, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.proposed_blocks_tree, 1, 0, 1, 1)
 
         self.label_17 = QLabel(self.proposed_tab)
         self.label_17.setObjectName(u"label_17")
@@ -438,16 +461,188 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.label_18, 0, 1, 1, 1)
 
         self.tabWidget.addTab(self.proposed_tab, "")
+        self.tab = QWidget()
+        self.tab.setObjectName(u"tab")
+        self.verticalLayout_11 = QVBoxLayout(self.tab)
+        self.verticalLayout_11.setSpacing(0)
+        self.verticalLayout_11.setObjectName(u"verticalLayout_11")
+        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
+        self.frame_2 = QFrame(self.tab)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.formLayout_7 = QFormLayout(self.frame_2)
+        self.formLayout_7.setObjectName(u"formLayout_7")
+        self.change_password_btn = QPushButton(self.frame_2)
+        self.change_password_btn.setObjectName(u"change_password_btn")
+
+        self.formLayout_7.setWidget(2, QFormLayout.LabelRole, self.change_password_btn)
+
+        self.label_6 = QLabel(self.frame_2)
+        self.label_6.setObjectName(u"label_6")
+
+        self.formLayout_7.setWidget(0, QFormLayout.LabelRole, self.label_6)
+
+        self.old_password_in = QLineEdit(self.frame_2)
+        self.old_password_in.setObjectName(u"old_password_in")
+
+        self.formLayout_7.setWidget(0, QFormLayout.FieldRole, self.old_password_in)
+
+        self.label_19 = QLabel(self.frame_2)
+        self.label_19.setObjectName(u"label_19")
+
+        self.formLayout_7.setWidget(1, QFormLayout.LabelRole, self.label_19)
+
+        self.new_password_in = QLineEdit(self.frame_2)
+        self.new_password_in.setObjectName(u"new_password_in")
+
+        self.formLayout_7.setWidget(1, QFormLayout.FieldRole, self.new_password_in)
+
+
+        self.verticalLayout_11.addWidget(self.frame_2)
+
+        self.tabWidget.addTab(self.tab, "")
 
         self.verticalLayout_6.addWidget(self.tabWidget)
 
+        self.label_28 = QLabel(self.my_wallet_pg)
+        self.label_28.setObjectName(u"label_28")
+
+        self.verticalLayout_6.addWidget(self.label_28)
+
         self.contacts_list = QListWidget(self.my_wallet_pg)
-        QListWidgetItem(self.contacts_list)
         self.contacts_list.setObjectName(u"contacts_list")
+        self.contacts_list.setFrameShape(QFrame.NoFrame)
 
         self.verticalLayout_6.addWidget(self.contacts_list)
 
         self.stackedWidget.addWidget(self.my_wallet_pg)
+        self.page = QWidget()
+        self.page.setObjectName(u"page")
+        self.verticalLayout_13 = QVBoxLayout(self.page)
+        self.verticalLayout_13.setSpacing(0)
+        self.verticalLayout_13.setObjectName(u"verticalLayout_13")
+        self.verticalLayout_13.setContentsMargins(0, 0, 0, 0)
+        self.tabWidget_3 = QTabWidget(self.page)
+        self.tabWidget_3.setObjectName(u"tabWidget_3")
+        self.tabWidget_3.setStyleSheet(u"QTabWidget::pane { border: 0; }")
+        self.tabWidget_3.setTabShape(QTabWidget.Triangular)
+        self.new_wallet_tab = QWidget()
+        self.new_wallet_tab.setObjectName(u"new_wallet_tab")
+        self.verticalLayout_14 = QVBoxLayout(self.new_wallet_tab)
+        self.verticalLayout_14.setSpacing(0)
+        self.verticalLayout_14.setObjectName(u"verticalLayout_14")
+        self.verticalLayout_14.setContentsMargins(0, 0, 0, 0)
+        self.frame_11 = QFrame(self.new_wallet_tab)
+        self.frame_11.setObjectName(u"frame_11")
+        self.frame_11.setFrameShape(QFrame.StyledPanel)
+        self.frame_11.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_16 = QVBoxLayout(self.frame_11)
+        self.verticalLayout_16.setSpacing(0)
+        self.verticalLayout_16.setObjectName(u"verticalLayout_16")
+        self.verticalLayout_16.setContentsMargins(0, 0, 0, 0)
+        self.label_23 = QLabel(self.frame_11)
+        self.label_23.setObjectName(u"label_23")
+
+        self.verticalLayout_16.addWidget(self.label_23)
+
+        self.label_25 = QLabel(self.frame_11)
+        self.label_25.setObjectName(u"label_25")
+
+        self.verticalLayout_16.addWidget(self.label_25)
+
+        self.label_26 = QLabel(self.frame_11)
+        self.label_26.setObjectName(u"label_26")
+
+        self.verticalLayout_16.addWidget(self.label_26)
+
+        self.label_27 = QLabel(self.frame_11)
+        self.label_27.setObjectName(u"label_27")
+
+        self.verticalLayout_16.addWidget(self.label_27)
+
+
+        self.verticalLayout_14.addWidget(self.frame_11)
+
+        self.frame_9 = QFrame(self.new_wallet_tab)
+        self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setStyleSheet(u"")
+        self.frame_9.setFrameShape(QFrame.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Raised)
+        self.formLayout_8 = QFormLayout(self.frame_9)
+        self.formLayout_8.setObjectName(u"formLayout_8")
+        self.formLayout_8.setHorizontalSpacing(0)
+        self.formLayout_8.setVerticalSpacing(0)
+        self.formLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.label_24 = QLabel(self.frame_9)
+        self.label_24.setObjectName(u"label_24")
+
+        self.formLayout_8.setWidget(0, QFormLayout.LabelRole, self.label_24)
+
+        self.choosing_password_in = QLineEdit(self.frame_9)
+        self.choosing_password_in.setObjectName(u"choosing_password_in")
+        self.choosing_password_in.setContextMenuPolicy(Qt.DefaultContextMenu)
+
+        self.formLayout_8.setWidget(0, QFormLayout.FieldRole, self.choosing_password_in)
+
+        self.create_wallet_btn = QPushButton(self.frame_9)
+        self.create_wallet_btn.setObjectName(u"create_wallet_btn")
+
+        self.formLayout_8.setWidget(1, QFormLayout.LabelRole, self.create_wallet_btn)
+
+        self.verticalSpacer_2 = QSpacerItem(20, 16777215, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.formLayout_8.setItem(2, QFormLayout.LabelRole, self.verticalSpacer_2)
+
+
+        self.verticalLayout_14.addWidget(self.frame_9)
+
+        self.tabWidget_3.addTab(self.new_wallet_tab, "")
+        self.already_have_a_wallet_tab = QWidget()
+        self.already_have_a_wallet_tab.setObjectName(u"already_have_a_wallet_tab")
+        self.verticalLayout_15 = QVBoxLayout(self.already_have_a_wallet_tab)
+        self.verticalLayout_15.setSpacing(0)
+        self.verticalLayout_15.setObjectName(u"verticalLayout_15")
+        self.verticalLayout_15.setContentsMargins(0, 0, 0, 0)
+        self.frame_10 = QFrame(self.already_have_a_wallet_tab)
+        self.frame_10.setObjectName(u"frame_10")
+        self.frame_10.setFrameShape(QFrame.StyledPanel)
+        self.frame_10.setFrameShadow(QFrame.Raised)
+        self.formLayout_10 = QFormLayout(self.frame_10)
+        self.formLayout_10.setObjectName(u"formLayout_10")
+        self.label_21 = QLabel(self.frame_10)
+        self.label_21.setObjectName(u"label_21")
+
+        self.formLayout_10.setWidget(0, QFormLayout.LabelRole, self.label_21)
+
+        self.lineEdit = QLineEdit(self.frame_10)
+        self.lineEdit.setObjectName(u"lineEdit")
+
+        self.formLayout_10.setWidget(0, QFormLayout.FieldRole, self.lineEdit)
+
+        self.label_22 = QLabel(self.frame_10)
+        self.label_22.setObjectName(u"label_22")
+
+        self.formLayout_10.setWidget(1, QFormLayout.LabelRole, self.label_22)
+
+        self.lineEdit_2 = QLineEdit(self.frame_10)
+        self.lineEdit_2.setObjectName(u"lineEdit_2")
+
+        self.formLayout_10.setWidget(1, QFormLayout.FieldRole, self.lineEdit_2)
+
+        self.recreat_wallet_btn = QPushButton(self.frame_10)
+        self.recreat_wallet_btn.setObjectName(u"recreat_wallet_btn")
+
+        self.formLayout_10.setWidget(2, QFormLayout.LabelRole, self.recreat_wallet_btn)
+
+
+        self.verticalLayout_15.addWidget(self.frame_10)
+
+        self.tabWidget_3.addTab(self.already_have_a_wallet_tab, "")
+
+        self.verticalLayout_13.addWidget(self.tabWidget_3)
+
+        self.stackedWidget.addWidget(self.page)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -458,9 +653,10 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stackedWidget.setCurrentIndex(1)
-        self.tabWidget_2.setCurrentIndex(1)
-        self.tabWidget.setCurrentIndex(4)
+        self.stackedWidget.setCurrentIndex(3)
+        self.tabWidget_2.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget_3.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -468,14 +664,12 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.label_6.setText(QCoreApplication.translate("MainWindow", u"icon", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"meetcoin", None))
-        self.minimize_button.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.maximize_button.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
-        self.exit_button.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
+        self.minimize_button.setText(QCoreApplication.translate("MainWindow", u"min", None))
+        self.maximize_button.setText(QCoreApplication.translate("MainWindow", u"max", None))
+        self.exit_button.setText(QCoreApplication.translate("MainWindow", u"close", None))
         self.my_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.blockchain_btn.setText(QCoreApplication.translate("MainWindow", u"blockchain", None))
-        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"settings", None))
         self.help_btn.setText(QCoreApplication.translate("MainWindow", u"help", None))
         self.label_12.setText(QCoreApplication.translate("MainWindow", u"block number: ", None))
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"validator's name/validator's public key: ", None))
@@ -484,6 +678,7 @@ class Ui_MainWindow(object):
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"receiver's name/ receiver's public key: ", None))
         self.label_16.setText(QCoreApplication.translate("MainWindow", u"amount: ", None))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.search_transaction_tab), QCoreApplication.translate("MainWindow", u"search transaction", None))
+        self.label_20.setText(QCoreApplication.translate("MainWindow", u"for help, ask me.", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"your public key: ", None))
         self.public_key_lbl.setText(QCoreApplication.translate("MainWindow", u"public_key", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"current balance: ", None))
@@ -502,16 +697,26 @@ class Ui_MainWindow(object):
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"amount (including validator fee): ", None))
         self.pushButton.setText(QCoreApplication.translate("MainWindow", u"sign the transaction and send it", None))
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
+        self.transaction_receivers_name_lable.setText(QCoreApplication.translate("MainWindow", u"transaction receiver", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.make_transaction_tab), QCoreApplication.translate("MainWindow", u"make transaction", None))
         self.label_17.setText(QCoreApplication.translate("MainWindow", u"proposed blocks:", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"transaction pool: ", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.proposed_tab), QCoreApplication.translate("MainWindow", u"proposed blocks and transaction pool", None))
-
-        __sortingEnabled = self.contacts_list.isSortingEnabled()
-        self.contacts_list.setSortingEnabled(False)
-        ___qlistwidgetitem = self.contacts_list.item(0)
-        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"self: ", None));
-        self.contacts_list.setSortingEnabled(__sortingEnabled)
-
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.proposed_tab), QCoreApplication.translate("MainWindow", u"proposed blocks\\transaction pool", None))
+        self.change_password_btn.setText(QCoreApplication.translate("MainWindow", u"update password", None))
+        self.label_6.setText(QCoreApplication.translate("MainWindow", u"old password: ", None))
+        self.label_19.setText(QCoreApplication.translate("MainWindow", u"updated password: ", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"settings", None))
+        self.label_28.setText(QCoreApplication.translate("MainWindow", u"contacts list:", None))
+        self.label_23.setText(QCoreApplication.translate("MainWindow", u"before you can start using this aplication, you have to choose a password for wallet.", None))
+        self.label_25.setText(QCoreApplication.translate("MainWindow", u"you will have to provide this password every time you want to make a transaction.", None))
+        self.label_26.setText(QCoreApplication.translate("MainWindow", u"if you loose your password, there will be no way to recover it.", None))
+        self.label_27.setText(QCoreApplication.translate("MainWindow", u"you can always change your password from: my wallet -> settings (after you set up your password).", None))
+        self.label_24.setText(QCoreApplication.translate("MainWindow", u"new password: ", None))
+        self.create_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"creat wallet", None))
+        self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.new_wallet_tab), QCoreApplication.translate("MainWindow", u"new wallet", None))
+        self.label_21.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
+        self.label_22.setText(QCoreApplication.translate("MainWindow", u"secret key (protected by the provided password): ", None))
+        self.recreat_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"recreat wallet", None))
+        self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.already_have_a_wallet_tab), QCoreApplication.translate("MainWindow", u"already have a wallet", None))
     # retranslateUi
 
