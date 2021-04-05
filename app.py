@@ -1,15 +1,14 @@
 # for networking:
 from networking import *
-from meetcoin import *
 from select import select
 
+# for meetcoin calculations and
+from meetcoin import *
+
 # for gui:
-from main_gui import Ui_MainWindow
+from ui_meetcoin import Ui_MainWindow
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
-
-# for exit:
-from sys import exit
 
 
 class MainWindow(qtw.QMainWindow):
@@ -41,6 +40,8 @@ class MainWindow(qtw.QMainWindow):
 
         # setting up wallet:
         self.ui.create_wallet_btn.clicked.connect(self.create_wallet)
+        self.ui.recreate_wallet_btn.clicked.connect(self.recreate_wallet)
+        self.ui.enter_wallet_btn.clicked.connect(self.enter_wallet)
         self.wallet = None
 
         # setting up networking:
@@ -49,6 +50,7 @@ class MainWindow(qtw.QMainWindow):
         # setting up navigation buttons:
         self.ui.my_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg))  # navigation to my wallet page
         self.ui.blockchain_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.blockchain_pg))  # navigation to blockchain page
+        self.ui.go_to_changing_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.change_wallet_pg))  # navigation to change wallet page
         self.ui.help_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.help_pg))  # navigation to help page
         self.ui.menu_frame.hide()  # hide until a wallet is created/recreated
 
@@ -66,10 +68,12 @@ class MainWindow(qtw.QMainWindow):
             for contact_name in contact_list_dict:
                 self.add_contact(contact_name, contact_list_dict[contact_name])
 
-        # setting up adding removing and editing contacts
+        # setting up adding removing and editing contacts:
         self.ui.add_contact_btn.clicked.connect(self.add_contact)
         self.ui.update_contact_btn.clicked.connect(self.update_contact)
         self.ui.delete_contact_btn.clicked.connect(self.remove_selected_contact)
+
+        self.ui.send_transaction_btn.clicked.connect(self.send_transaction)
 
     def maximize_resize_window(self):
         if not self.is_maximized:
@@ -105,6 +109,33 @@ class MainWindow(qtw.QMainWindow):
         self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
         self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)
         self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
+
+    def enter_wallet(self):
+        password = self.ui.already_have_wallet_password_in.text()
+        try:
+            with open("data\\private key.txt", 'r') as secret_key_file:
+                protected_secret_key = secret_key_file.read()
+                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+            self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
+            self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)
+            self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
+        except ValueError:
+            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+        except IndexError:
+            qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
+
+    def recreate_wallet(self):
+        password = self.ui.recreate_wallet_password.text()
+        protected_secret_key = self.ui.recreate_wallet_private_key.text()
+        try:
+            self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+            with open("data\\private key.txt", 'w') as secret_key_file:
+                secret_key_file.write(protected_secret_key)
+            self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
+            self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)
+            self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
+        except ValueError:
+            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
 
     def add_contact(self, name=None, public_key=None):
         if not name:
@@ -149,6 +180,33 @@ class MainWindow(qtw.QMainWindow):
             self.ui.contacts_list.clear()
             for contact_name in data:
                 self.ui.contacts_list.addItem(f"{contact_name}: {data[contact_name]}")
+
+    def send_transaction(self):
+        password = self.ui.transaction_password_in.text()
+        try:
+            with open("data\\private key.txt", 'r') as secret_key_file:
+                protected_secret_key = secret_key_file.read()
+                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+
+                receiver = self.ui.contacts_list.currentItem()
+                receiver = receiver.text().split(": ")[-1]
+
+                try:
+                    amount = self.ui.amount_text_incer.text()
+                except ValueError:
+                    qtw.QMessageBox.critical(None, 'Fail', "amount must be a number")
+                if amount > 0:
+                    transaction = self.wallet.make_transaction(receiver, amount)
+                    self.peer.udp_send(transaction)
+                    print("sent transaction")
+                else:
+                    qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero")
+
+        except ValueError:
+            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+        except AttributeError:
+            qtw.QMessageBox.critical(None, 'Fail', "no contact selected.")
+
 
     # on events:
     def mousePressEvent(self, event):
