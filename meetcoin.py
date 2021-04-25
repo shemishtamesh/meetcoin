@@ -83,12 +83,15 @@ class Transaction:
 
     def serialize(self):
         """returns a json string of the transaction, can be used for sending."""
-        return json.dumps(self.__dict__)
+        return str(json.dumps(self.__dict__, indent=4))
 
     @staticmethod
     def deserialize(data):
         """takes a serialized (json string of a) transaction and returns a transaction object"""
-        data_dict = json.loads(data)
+        if type(data) == str:
+            data_dict = json.loads(data)
+        elif type(data) == dict:
+            data_dict = data
         return Transaction(data_dict["receiver"],
                            data_dict["sender"],
                            data_dict["amount"],
@@ -169,26 +172,26 @@ class Block:
 
     def serialize(self):
         """returns a (json) string representation of the block"""
-        block_dict = self.__dict__
+        block_dict = dict(self.__dict__)
         transaction_list = []
         for transaction in block_dict["data"]:
-            transaction_list.append(transaction.serialize())
+            transaction_list.append(transaction.__dict__)
         block_dict["data"] = transaction_list
-        return json.dumps(self.__dict__)
+        return str(json.dumps(block_dict, indent=4))
 
     @staticmethod
     def deserialize(data):
         """takes a json representation of a block and returns the represented block"""
-        data_dict = json.loads(data)
-        transaction_json_list = data_dict["data"]
+        if type(data) == str:
+            data_dict = json.loads(data)
+        else:
+            data_dict = data
         transaction_list = []
-        for transaction_json in transaction_json_list:
-            transaction_list.append(Transaction.deserialize(transaction_json))
-        data_dict["data"] = transaction_list
-
+        for transaction in data_dict["data"]:
+            transaction_list.append(Transaction.deserialize(transaction))
         return Block(data_dict["block_number"],
                      data_dict["prev_hash"],
-                     data_dict["data"],
+                     transaction_list,
                      data_dict["validator"],
                      data_dict["signature"])
 
@@ -273,13 +276,26 @@ class Blockchain:
 
     def serialize(self):
         """returns a json representation of the blockchain"""
-        return json.dumps(self.__dict__)
+        blockchain_dict = dict(self.__dict__)
+        block_list = []
+        for block in blockchain_dict["chain"]:
+            block_dict = dict(block.__dict__)
+            transaction_list = []
+            for transaction in block_dict["data"]:
+                transaction_list.append(transaction.__dict__)
+            block_dict["data"] = transaction_list
+            block_list.append(block_dict)
+        blockchain_dict["chain"] = block_list
+        return str(json.dumps(blockchain_dict, indent=4))
 
     @staticmethod
     def deserialize(data):
-        """takes a json representation of a blockchain and returns a blockchain"""
+        """takes a json representation of a blockchain (str) and returns a blockchain (Blockchain)"""
         data_dict = json.loads(data)
-        return Blockchain(data_dict["chain"])
+        block_list = []
+        for block in data_dict["chain"]:
+            block_list.append(Block.deserialize(block))
+        return Blockchain(block_list)
 
 
 class Wallet:
@@ -369,9 +385,21 @@ class Wallet:
 
 
 def main():
-    alice = Wallet(ECC.import_key(INITIAL_COIN_HOLDER_SECRET))
-    print(alice.public_key.export_key(format=PUBLIC_KEY_FORMAT))
-
+    bc = Wallet().blockchain  # make Block
+    print(bc)
+    print(type(bc))
+    print("\n" + "0" * 64 + "\n")
+    sbc = bc.serialize()  # serialize Block
+    print(sbc)
+    print(type(sbc))
+    print("\n" + "1" * 64 + "\n")
+    dbc = Blockchain.deserialize(sbc)  # deserialize Block
+    print(dbc)
+    print(type(dbc))
+    print("\n" + "2" * 64 + "\n")
+    sdbc = dbc.serialize()  # deserialize Block
+    print(sdbc)
+    print(type(sdbc))
 
 if __name__ == "__main__":
     main()

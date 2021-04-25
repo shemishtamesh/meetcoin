@@ -1,19 +1,23 @@
 # for meetcoin:
 from Crypto.Hash import SHA256  # Secure Hash Algorithm (of size) 256 (bits)
 
+# for xml for tree widget on gui:
+from json2xml.utils import readfromstring
+from json2xml import json2xml
+import xml.etree.ElementTree as et
 
 CURVE_FOR_KEYS = 'P-256'  # 'NIST P-256'
 STANDARD_FOR_SIGNATURES = 'fips-186-3'
 STAKE_ADDRESS = "STAKE_ADDRESS"
 TRANSACTION_FEE = 1.0
-PUBLIC_KEY_FORMAT = 'OpenSSH'
+PUBLIC_KEY_FORMAT = 'PEM'#'OpenSSH'
 SECRET_KEY_FORMAT = 'PEM'
 SECRET_KEY_PROTECTION = 'PBKDF2WithHMAC-SHA1AndAES128-CBC'
 MAX_TRANSACTIONS_IN_BLOCK = 3
 
 # for ICO:
 NUMBER_OF_COINS = 10.0  # must be over 2
-INITIAL_COIN_HOLDER = r'''ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPc6eofSRU6gW2oFgErl4U1V/95lEHZURZAdddqhVoANiIpiyeb/XCBfjcFtPOo/jQwWJNZeWqFZxrQJ0+FI5E8='''
+INITIAL_COIN_HOLDER = '''-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9zp6h9JFTqBbagWASuXhTVX/3mUQ\ndlRFkB112qFWgA2IimLJ5v9cIF+NwW086j+NDBYk1l5aoVnGtAnT4UjkTw==\n-----END PUBLIC KEY-----'''
 INITIAL_COIN_HOLDER_SECRET = r'''-----BEGIN PRIVATE KEY-----
 MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgkchMEe4X6NC8pWgS
 K1F4yX0KsgZFAYwr9vZmc8aKrauhRANCAAT3OnqH0kVOoFtqBYBK5eFNVf/eZRB2
@@ -39,3 +43,13 @@ def sha256_hash(*args):
 
 #for networking:
 RECV_SIZE = 1024
+UDP_PORT = 50090
+TCP_PORT = 55556
+
+def json_file_to_xml_string(json_file):
+    json_string = json_file.read()
+
+    data = readfromstring(json_string)
+    xml_string = json2xml.Json2xml(data).to_xml()
+
+    return et.fromstring(xml_string)[0]  # [0] because json2xml adds an unneeded wrapper

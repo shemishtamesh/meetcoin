@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinXhOlOe.ui'
+## Form generated from reading UI file 'meetcoinqshRXI.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -694,7 +694,7 @@ class Ui_MainWindow(object):
         self.label_20.setText(QCoreApplication.translate("MainWindow", u"for help, ask me.", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"your public key: ", None))
         self.public_key_lbl.setText(QCoreApplication.translate("MainWindow", u"public_key", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"current balance: ", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"your current balance: ", None))
         self.current_balance_lbl.setText(QCoreApplication.translate("MainWindow", u"current_balance", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.my_wallet_tab), QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"new contacts name: ", None))
