@@ -13,7 +13,7 @@ TRANSACTION_FEE = 1.0
 PUBLIC_KEY_FORMAT = 'PEM'#'OpenSSH'
 SECRET_KEY_FORMAT = 'PEM'
 SECRET_KEY_PROTECTION = 'PBKDF2WithHMAC-SHA1AndAES128-CBC'
-MAX_TRANSACTIONS_IN_BLOCK = 3
+NUM_OF_TRANSACTIONS_IN_BLOCK = 3
 
 # for ICO:
 NUMBER_OF_COINS = 10.0  # must be over 2
@@ -41,10 +41,11 @@ def sha256_hash(*args):
     return SHA256.new(str_rep.encode())
 
 
-#for networking:
+# for networking:
 RECV_SIZE = 1024
 UDP_PORT = 50090
 TCP_PORT = 55556
+
 
 def json_file_to_xml_string(json_file):
     json_string = json_file.read()

@@ -337,14 +337,17 @@ class Wallet:
 
     def make_block(self):
         """makes a block, empties the transaction pool, and appends the proposed blocks list with the new block"""
-        new_block = self.blockchain.next_block(self.transaction_pool[:MAX_TRANSACTIONS_IN_BLOCK])
-        block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)  # for signature, not really the block's hash
-        signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
-        signature = str(signer.sign(block_hash))
-        new_block.validator = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
-        new_block.signature = signature
-        self.transaction_pool = []
-        return new_block
+        if len(self.transaction_pool) > NUM_OF_TRANSACTIONS_IN_BLOCK:
+            new_block = self.blockchain.next_block(self.transaction_pool[:NUM_OF_TRANSACTIONS_IN_BLOCK])
+            block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)  # for signature, not really the block's hash
+            signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
+            signature = str(signer.sign(block_hash))
+            new_block.validator = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
+            new_block.signature = signature
+            self.transaction_pool = []
+            return new_block
+
+        return None
 
     def add_proposed_block(self, block):
         """adds a block the the proposed blocks list"""
@@ -352,6 +355,7 @@ class Wallet:
 
     def add_a_block_to_chain(self):
         """adds a block from the proposed blocks to the blockchain iff the block is valid and its validator is the current leader, also empties the transaction pool and the proposed blocks list"""
+        # if len(self.proposed_blocks) > 10:
         for block in self.proposed_blocks:
             if block.is_valid(self.blockchain) and block.validator == self.get_leader():
                 self.blockchain.chain.append(block)

@@ -2,14 +2,23 @@
 from networking import *
 from select import select
 
-# for meetcoin calculations and
+# for meetcoin system
 from meetcoin import *
+
+# for files
+from random import randint
+import os
+import platform
 
 # for gui:
 from ui_meetcoin import Ui_MainWindow
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 
+if platform.system() == 'Linux':
+    SLASH_SIGN = '/'
+elif platform.system() == 'Windows':
+    SLASH_SIGN = '{SLASH_SIGN}'
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -58,14 +67,14 @@ class MainWindow(qtw.QMainWindow):
 
         # setting up contacts list file:
         try:
-            with open("data\\contacts list.json", "r+") as contact_list_file:
+            with open(f"data{SLASH_SIGN}contacts list.json", "r+") as contact_list_file:
                 if type(json.load(contact_list_file)) != dict:
                     contact_list_file.seek(0)
                     json.dump({}, contact_list_file)
         except (IOError, json.decoder.JSONDecodeError) as e:
-            with open("data\\contacts list.json", "w") as contact_list_file:
+            with open(f"data{SLASH_SIGN}contacts list.json", "w") as contact_list_file:
                 contact_list_file.write("{}")
-        with open("data\\contacts list.json", "r") as contact_list_file:
+        with open(f"data{SLASH_SIGN}contacts list.json", "r") as contact_list_file:
             contact_list_dict = json.load(contact_list_file)
             for contact_name in contact_list_dict:
                 self.add_contact(contact_name, contact_list_dict[contact_name])
@@ -78,10 +87,15 @@ class MainWindow(qtw.QMainWindow):
         # networking related:
         self.ui.send_transaction_btn.clicked.connect(self.send_transaction)
 
-        # set up:
+        # set up password change change:
         self.ui.change_password_btn.clicked.connect(self.update_password)
 
+        # set up is_validator boolean
+        self.is_validator = False
+
+        # start repeating method for receiving messages:
         self.constant_receive()
+
 
     # window functionality:
     def maximize_resize_window(self):
@@ -110,7 +124,7 @@ class MainWindow(qtw.QMainWindow):
     def create_wallet(self):
         self.wallet = Wallet()
         password = self.ui.choosing_password_in.text()
-        with open("data\\private key.txt", 'w') as secret_key_file:
+        with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
             if password:
                 secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
                                                                         passphrase=password,
@@ -122,23 +136,26 @@ class MainWindow(qtw.QMainWindow):
         self.finish_entering_wallet()
 
     def enter_wallet(self):
-        password = self.ui.already_have_wallet_password_in.text()
         try:
-            with open("data\\private key.txt", 'r') as secret_key_file:
-                protected_secret_key = secret_key_file.read()
-                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
-            self.finish_entering_wallet()
-        except ValueError:
-            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
-        except IndexError:
-            qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
+            password = self.ui.already_have_wallet_password_in.text()
+            try:
+                with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
+                    protected_secret_key = secret_key_file.read()
+                    self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+                self.finish_entering_wallet()
+            except ValueError:
+                qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+            except IndexError:
+                qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
+        except Exception as e:
+            print(e)
 
     def recreate_wallet(self):
         password = self.ui.recreate_wallet_password.text()
         protected_secret_key = self.ui.recreate_wallet_private_key.text()
         try:
             self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
-            with open("data\\private key.txt", 'w') as secret_key_file:
+            with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
                 secret_key_file.write(protected_secret_key)
             self.finish_entering_wallet()
         except ValueError:
@@ -146,34 +163,56 @@ class MainWindow(qtw.QMainWindow):
 
     def finish_entering_wallet(self):
         self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
-        self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)
+        self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)  # go to "my wallet" page
         self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
         self.create_blockchain_file()
         self.ui.current_balance_lbl.setText(str(self.wallet.get_balance()))
-        with open("data\\blockchain.json", "r") as blockchain_file:
+        with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
             self.put_json_chain_on_tree(blockchain_file)
+        if self.wallet in self.wallet.blockchain.get_validators():
+            self.is_validator = True
+
+        self.handle_blocks()
 
     # blockchain file:
     def create_blockchain_file(self):
         try:
-            with open("data\\blockchain.json", "r+") as blockchain_file:
+            with open(f"data{SLASH_SIGN}blockchain.json", "r+") as blockchain_file:
                 if type(json.load(blockchain_file)) != dict:
                     blockchain_file.seek(0)
                     json.dump(self.wallet.blockchain.serialize(), blockchain_file, indent=4)
         except (IOError, json.decoder.JSONDecodeError) as e:
-            with open("data\\blockchain.json", "w") as blockchain_file:
+            with open(f"data{SLASH_SIGN}blockchain.json", "w") as blockchain_file:
                 blockchain_file.write(self.wallet.blockchain.serialize())
-        with open("data\\blockchain.json", "r") as blockchain_file:
+        with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
             self.wallet.blockchain = Blockchain.deserialize(blockchain_file.read())
 
     # trees:
-    def add_transaction_to_pool_tree(self, json_file):
-        tree = json_file_to_xml_string(json_file)
-        self.put_xml_tree_on_tree(tree)
+    def add_transaction_to_pool_tree(self, json_transaction):
+        rand_int = randint(0, 999999)
+        with open(f"data{SLASH_SIGN}transaction{rand_int}.json", "w") as json_file:
+            json_file.write("{\"transaction\":")  # adding a "transaction wrapper for display
+            json_file.write(json_transaction.serialize())
+            json_file.write("}")  # adding a "transaction wrapper for display
+        with open(f"data{SLASH_SIGN}transaction{rand_int}.json", "r") as json_file:
+            tree = json_file_to_xml_string(json_file)
+        self.put_xml_tree_on_tree(tree, self.ui.transaction_pool_tree)
+        os.remove(f"data{SLASH_SIGN}transaction{rand_int}.json")
 
-    def put_xml_tree_on_tree(self, xml_tree):
+    def add_block_to_proposed_tree(self, json_block):
+        rand_int = randint(0, 999999)
+        with open(f"data{SLASH_SIGN}block{rand_int}.json", "w") as json_file:
+            json_file.write("{\"block\":")  # adding a "block wrapper for display
+            json_file.write(json_block.serialize())
+            json_file.write("}")  # adding a "block wrapper for display
+        with open(f"data{SLASH_SIGN}block{rand_int}.json", "r") as json_file:
+            tree = json_file_to_xml_string(json_file)
+        self.put_xml_tree_on_tree(tree, self.ui.proposed_blocks_tree)
+        os.remove(f"data{SLASH_SIGN}block{rand_int}.json")
+
+    def put_xml_tree_on_tree(self, xml_tree, tree_widget):
         top_level_item = qtw.QTreeWidgetItem([xml_tree.tag])
-        self.ui.blockchain_tree.addTopLevelItem(top_level_item)
+        tree_widget.addTopLevelItem(top_level_item)
 
         def display_tree(parent, tree_to_display):
             for child in tree_to_display:
@@ -201,7 +240,7 @@ class MainWindow(qtw.QMainWindow):
                     for data_child in block_child:
                         data_child.tag = "transaction"
 
-        self.put_xml_tree_on_tree(tree)
+        self.put_xml_tree_on_tree(tree, self.ui.blockchain_tree)
 
     # contact list editing:
     def add_contact(self, name=None, public_key=None):
@@ -209,10 +248,16 @@ class MainWindow(qtw.QMainWindow):
             name = self.ui.new_contacts_name_in.text()
         if not public_key:
             public_key = self.ui.new_contacts_public_key_in.text()
+            if public_key != STAKE_ADDRESS:
+                try:
+                    ECC.import_key(public_key)
+                except ValueError:
+                    qtw.QMessageBox.critical(None, 'Fail', "public key is incorrect")
+                    return False
 
         # add the new contact to the contacts list file:
         new_contact = {name: public_key}
-        with open("data\\contacts list.json", "r+") as contact_list_file:
+        with open(f"data{SLASH_SIGN}contacts list.json", "r+") as contact_list_file:
             data = json.load(contact_list_file)
             if name not in data:
                 data.update(new_contact)
@@ -220,6 +265,7 @@ class MainWindow(qtw.QMainWindow):
                 json.dump(data, contact_list_file)
 
         self.update_contacts_list_on_gui()
+        return True
 
     def update_contact(self):
         selected_contacts = self.ui.contacts_list.selectedItems()
@@ -231,7 +277,7 @@ class MainWindow(qtw.QMainWindow):
         if not selected_contacts:
             selected_contacts = self.ui.contacts_list.selectedItems()
         for contact in selected_contacts:
-            with open("data\\contacts list.json", "r+") as contact_list_file:
+            with open(f"data{SLASH_SIGN}contacts list.json", "r+") as contact_list_file:
                 data = json.load(contact_list_file)
                 contacts_name = contact.text().split(": ")[0]
                 data.pop(contacts_name)
@@ -242,7 +288,7 @@ class MainWindow(qtw.QMainWindow):
         self.update_contacts_list_on_gui()
 
     def update_contacts_list_on_gui(self):
-        with open("data\\contacts list.json", "r") as contact_list_file:
+        with open(f"data{SLASH_SIGN}contacts list.json", "r") as contact_list_file:
             data = json.load(contact_list_file)
             self.ui.contacts_list.clear()
             for contact_name in data:
@@ -252,7 +298,7 @@ class MainWindow(qtw.QMainWindow):
     def update_password(self):
         old_password = self.ui.old_password_in.text()
         try:
-            with open("data\\private key.txt", 'r') as secret_key_file:
+            with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
                 protected_secret_key = secret_key_file.read()
                 ECC.import_key(protected_secret_key, passphrase=old_password)
         except ValueError:
@@ -260,18 +306,36 @@ class MainWindow(qtw.QMainWindow):
             return
 
         new_password = self.ui.new_password_in.text()
-        with open("data\\private key.txt", 'w') as secret_key_file:
+        with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
             secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
                                                                     passphrase=new_password,
                                                                     protection=SECRET_KEY_PROTECTION))
 
         qtw.QMessageBox.information(None, 'Success', "successfully changed the password.")
 
+    # block handling:
+    def handle_blocks(self):
+        new_block = self.wallet.make_block()
+        if self.is_validator and new_block:
+            self.peer.udp_send(self.wallet.make_block())
+            print("sent block")
+            self.ui.transaction_pool_tree.clear()
+
+        if self.wallet.add_a_block_to_chain():
+            self.ui.transaction_pool_tree.clear()
+            self.ui.proposed_blocks_tree.clear()
+
+        qtc.QTimer.singleShot(10000, self.handle_blocks)
+
+    def make_blocks(sfelf): pass
+
+    def update_blockchain(self): pass
+
     # networking:
     def send_transaction(self):
         try:
             password = self.ui.transaction_password_in.text()
-            with open("data\\private key.txt", 'r') as secret_key_file:
+            with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
                 protected_secret_key = secret_key_file.read()
                 self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
 
@@ -312,7 +376,12 @@ class MainWindow(qtw.QMainWindow):
     def received_from_udp_socket(self, message):
         if type(message) == Transaction:
             self.wallet.add_transaction_to_pool(message)
-            self.add_transaction_to_pool_tree()
+            self.add_transaction_to_pool_tree(message)
+        if type(message) == Block:
+            self.wallet.add_proposed_block(message)
+            self.add_block_to_proposed_tree(message)
+        else:
+            print(message)
 
     def request_missing_blocks(self):
         self.peer.request_update_connection()
@@ -324,7 +393,7 @@ class MainWindow(qtw.QMainWindow):
     def resizeEvent(self, event):
             qtw.QMainWindow.resizeEvent(self, event)
             rect = self.rect()
-            # top left grip doesn't need to be moved...
+            # top left grip doesn't need to be moved
             # top right
             self.grips[1].move(rect.right() - self.gripSize, 0)
             # bottom right
@@ -332,6 +401,7 @@ class MainWindow(qtw.QMainWindow):
                 rect.right() - self.gripSize, rect.bottom() - self.gripSize)
             # bottom left
             self.grips[3].move(0, rect.bottom() - self.gripSize)
+
 
 if __name__ == "__main__":
     app = qtw.QApplication([])

@@ -46,14 +46,11 @@ class Peer:
         if received_message[:len("transaction:")] == "transaction:":
             return Transaction.deserialize(received_message[len("transaction:"):])
 
-        elif received_message[:len("block:")] == "block:":
+        if received_message[:len("block:")] == "block:":
             return Block.deserialize(received_message[len("block:"):])
 
-        elif received_message == "request_update_connection":
+        if received_message == "request_update_connection":
             self.tcp_sock.connect(sender_address)
-
-        else:
-            return received_message
 
 
 if __name__ == "__main__":
