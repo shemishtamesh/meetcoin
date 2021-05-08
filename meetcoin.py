@@ -357,7 +357,7 @@ class Wallet:
             new_block.signature = signature
             self.transaction_pool = []
             print(new_block)
-            return new_block  # TODO: for some reason there are no transactions on new blocks, maybe only in some places I don't know
+            return new_block
 
         return None
 
