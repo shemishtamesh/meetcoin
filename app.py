@@ -15,10 +15,14 @@ from ui_meetcoin import Ui_MainWindow
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtCore as qtc
 
+# for exception handling:
+import sys
+
 if platform.system() == 'Linux':
     SLASH_SIGN = '/'
 elif platform.system() == 'Windows':
-    SLASH_SIGN = '{SLASH_SIGN}'
+    SLASH_SIGN = '\\'
+
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -96,7 +100,6 @@ class MainWindow(qtw.QMainWindow):
         # start repeating method for receiving messages:
         self.constant_receive()
 
-
     # window functionality:
     def maximize_resize_window(self):
         if not self.is_maximized:
@@ -136,19 +139,16 @@ class MainWindow(qtw.QMainWindow):
         self.finish_entering_wallet()
 
     def enter_wallet(self):
+        password = self.ui.already_have_wallet_password_in.text()
         try:
-            password = self.ui.already_have_wallet_password_in.text()
-            try:
-                with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
-                    protected_secret_key = secret_key_file.read()
-                    self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
-                self.finish_entering_wallet()
-            except ValueError:
-                qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
-            except IndexError:
-                qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
-        except Exception as e:
-            print(e)
+            with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
+                protected_secret_key = secret_key_file.read()
+                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+            self.finish_entering_wallet()
+        except ValueError:
+            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+        except IndexError:
+            qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
 
     def recreate_wallet(self):
         password = self.ui.recreate_wallet_password.text()
@@ -169,7 +169,8 @@ class MainWindow(qtw.QMainWindow):
         self.ui.current_balance_lbl.setText(str(self.wallet.get_balance()))
         with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
             self.put_json_chain_on_tree(blockchain_file)
-        if self.wallet in self.wallet.blockchain.get_validators():
+
+        if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
             self.is_validator = True
 
         self.handle_blocks()
@@ -186,6 +187,11 @@ class MainWindow(qtw.QMainWindow):
                 blockchain_file.write(self.wallet.blockchain.serialize())
         with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
             self.wallet.blockchain = Blockchain.deserialize(blockchain_file.read())
+
+    def update_blockchain_file(self):
+        with open(f"data{SLASH_SIGN}blockchain.json", "w") as blockchain_file:
+            blockchain_file.write(self.wallet.blockchain.serialize())
+        self.ui.current_balance_lbl.setText(str(self.wallet.get_balance()))
 
     # trees:
     def add_transaction_to_pool_tree(self, json_transaction):
@@ -240,6 +246,7 @@ class MainWindow(qtw.QMainWindow):
                     for data_child in block_child:
                         data_child.tag = "transaction"
 
+        self.ui.blockchain_tree.clear()
         self.put_xml_tree_on_tree(tree, self.ui.blockchain_tree)
 
     # contact list editing:
@@ -317,19 +324,20 @@ class MainWindow(qtw.QMainWindow):
     def handle_blocks(self):
         new_block = self.wallet.make_block()
         if self.is_validator and new_block:
-            self.peer.udp_send(self.wallet.make_block())
-            print("sent block")
+            self.peer.udp_send(new_block)
             self.ui.transaction_pool_tree.clear()
 
         if self.wallet.add_a_block_to_chain():
+            # clearing trees:
             self.ui.transaction_pool_tree.clear()
             self.ui.proposed_blocks_tree.clear()
 
+            # update blockchain file and blockchain tree:
+            self.update_blockchain_file()
+            with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
+                self.put_json_chain_on_tree(blockchain_file)
+
         qtc.QTimer.singleShot(10000, self.handle_blocks)
-
-    def make_blocks(sfelf): pass
-
-    def update_blockchain(self): pass
 
     # networking:
     def send_transaction(self):
@@ -337,7 +345,7 @@ class MainWindow(qtw.QMainWindow):
             password = self.ui.transaction_password_in.text()
             with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
                 protected_secret_key = secret_key_file.read()
-                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+                Wallet(ECC.import_key(protected_secret_key, passphrase=password))
 
                 receiver = self.ui.contacts_list.currentItem()
                 receiver = receiver.text().split(": ")[-1]
@@ -377,7 +385,7 @@ class MainWindow(qtw.QMainWindow):
         if type(message) == Transaction:
             self.wallet.add_transaction_to_pool(message)
             self.add_transaction_to_pool_tree(message)
-        if type(message) == Block:
+        elif type(message) == Block:
             self.wallet.add_proposed_block(message)
             self.add_block_to_proposed_tree(message)
         else:
@@ -404,6 +412,16 @@ class MainWindow(qtw.QMainWindow):
 
 
 if __name__ == "__main__":
+    # for handling exceptions:
+    sys._excepthook = sys.excepthook
+
+    def exception_hook(exctype, value, traceback):
+        print(traceback)
+        sys._excepthook(exctype, value, traceback)
+        sys.exit(1)
+    sys.excepthook = exception_hook
+
+    # for running the app:
     app = qtw.QApplication([])
     widget = MainWindow()
     widget.show()

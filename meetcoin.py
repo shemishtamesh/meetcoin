@@ -142,11 +142,16 @@ class Block:
                     return False
 
             # check signature:
-            hash_of_block_content = sha256_hash(self.block_number, self.prev_hash, self.data)
+            serialized_data = []
+            for transaction in self.data:
+                serialized_data.append(transaction.serialize())  # serialize data so that it won't be an object, but a string
+            hash_of_block_content = sha256_hash(self.block_number, self.prev_hash, serialized_data)
             verifier = DSS.new(ECC.import_key(self.validator), STANDARD_FOR_SIGNATURES)
             try:
                 verifier.verify(hash_of_block_content, eval(self.signature))
             except ValueError:
+                import sys
+                sys.exit()
                 return False
 
             # check block number:
@@ -219,7 +224,7 @@ class Blockchain:
         return block
 
     def replace_chain_if_more_reliable(self, new_chain):
-        # TODO: update this to something secure, longer isn't necessarily more secure in pos
+        # TODO: update this to something secure, longer isn't necessarily more secure in pos, probably get more than one chain compare them and choose the best
         """replaces the chain if the new chain is longer and valid"""
         if len(new_chain) > len(self.chain) and \
                 self.is_chain_valid(new_chain):
@@ -328,24 +333,31 @@ class Wallet:
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (float), returns a transaction (Transaction)"""
-        sender = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
-        fee = TRANSACTION_FEE
-        transaction_hash = sha256_hash(sender, receiver, amount, fee)
-        signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
-        signature = str(signer.sign(transaction_hash))
-        return Transaction(receiver, sender, amount, signature, fee)
+        if self.get_balance() >= amount:
+            sender = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
+            fee = TRANSACTION_FEE
+            transaction_hash = sha256_hash(sender, receiver, amount, fee)
+            signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
+            signature = str(signer.sign(transaction_hash))
+            return Transaction(receiver, sender, amount, signature, fee)
+        else:
+            return False
 
     def make_block(self):
         """makes a block, empties the transaction pool, and appends the proposed blocks list with the new block"""
-        if len(self.transaction_pool) > NUM_OF_TRANSACTIONS_IN_BLOCK:
+        if len(self.transaction_pool) >= NUM_OF_TRANSACTIONS_IN_BLOCK:
             new_block = self.blockchain.next_block(self.transaction_pool[:NUM_OF_TRANSACTIONS_IN_BLOCK])
-            block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, new_block.data)  # for signature, not really the block's hash
+            serialized_data = []
+            for transaction in new_block.data:
+                serialized_data.append(transaction.serialize())  # serialize data so that it won't be an object, but a string
+            block_hash = sha256_hash(new_block.block_number, new_block.prev_hash, serialized_data)  # for signature, not really the block's hash
             signer = DSS.new(self.secret_key, STANDARD_FOR_SIGNATURES)
             signature = str(signer.sign(block_hash))
             new_block.validator = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
             new_block.signature = signature
             self.transaction_pool = []
-            return new_block
+            print(new_block)
+            return new_block  # TODO: for some reason there are no transactions on new blocks, maybe only in some places I don't know
 
         return None
 
@@ -389,21 +401,7 @@ class Wallet:
 
 
 def main():
-    bc = Wallet().blockchain  # make Block
-    print(bc)
-    print(type(bc))
-    print("\n" + "0" * 64 + "\n")
-    sbc = bc.serialize()  # serialize Block
-    print(sbc)
-    print(type(sbc))
-    print("\n" + "1" * 64 + "\n")
-    dbc = Blockchain.deserialize(sbc)  # deserialize Block
-    print(dbc)
-    print(type(dbc))
-    print("\n" + "2" * 64 + "\n")
-    sdbc = dbc.serialize()  # deserialize Block
-    print(sdbc)
-    print(type(sdbc))
+    pass
 
 if __name__ == "__main__":
     main()

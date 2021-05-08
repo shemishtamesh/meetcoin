@@ -17,8 +17,6 @@ except (ImportError, ModuleNotFoundError) as e:
     operating_system = "linux"
     enter_key = '\n'
 
-# TODO: abandon text based app, start working on gui
-
 class App:
     def __init__(self, secret_key=None, blockchain=None):
         self.wallet = Wallet(secret_key, blockchain)
