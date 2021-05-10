@@ -18,6 +18,9 @@ from PyQt5 import QtCore as qtc
 # for exception handling:
 import sys
 
+# for block handling:
+import concurrent.futures
+
 if platform.system() == 'Linux':
     SLASH_SIGN = '/'
 elif platform.system() == 'Windows':
@@ -173,7 +176,9 @@ class MainWindow(qtw.QMainWindow):
         if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
             self.is_validator = True
 
-        self.handle_blocks()
+        self.request_missing_blocks()
+
+        self.handle_blocks()  # TODO: maybe use multithreading/processing for this, but probably because multithreading would probably not reduce time and multiprocessing wouldn't work because of memmory
 
     # blockchain file:
     def create_blockchain_file(self):
@@ -328,6 +333,10 @@ class MainWindow(qtw.QMainWindow):
             self.ui.transaction_pool_tree.clear()
 
         if self.wallet.add_a_block_to_chain():
+            # checking if validator now:
+            if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
+                self.is_validator = True
+
             # clearing trees:
             self.ui.transaction_pool_tree.clear()
             self.ui.proposed_blocks_tree.clear()
@@ -341,31 +350,36 @@ class MainWindow(qtw.QMainWindow):
 
     # networking:
     def send_transaction(self):
-        try:
-            password = self.ui.transaction_password_in.text()
-            with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
-                protected_secret_key = secret_key_file.read()
+        password = self.ui.transaction_password_in.text()
+        with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
+            protected_secret_key = secret_key_file.read()
+            try:
                 Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+            except ValueError:
+                qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+                return
 
-                receiver = self.ui.contacts_list.currentItem()
+            receiver = self.ui.contacts_list.currentItem()
+            try:
                 receiver = receiver.text().split(": ")[-1]
+            except AttributeError:
+                qtw.QMessageBox.critical(None, 'Fail', "no contact selected.")
+                return
 
-                try:
-                    amount = float(self.ui.amount_text_incer.text())
-                except ValueError:
-                    qtw.QMessageBox.critical(None, 'Fail', "amount must be a number")
-                    return
-                if amount > 0:
-                    transaction = self.wallet.make_transaction(receiver, amount)
+            try:
+                amount = float(self.ui.amount_text_incer.text())
+            except ValueError:
+                qtw.QMessageBox.critical(None, 'Fail', "amount must be a number.")
+                return
+            if amount > 0:
+                transaction = self.wallet.make_transaction(receiver, amount)
+                if transaction:
                     self.peer.udp_send(transaction)
-                    qtw.QMessageBox.information(None, 'Success', "successfully sent the transaction")
+                    qtw.QMessageBox.information(None, 'Success', "successfully sent the transaction.")
                 else:
-                    qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero")
-
-        except ValueError:
-            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
-        except AttributeError:
-            qtw.QMessageBox.critical(None, 'Fail', "no contact selected.")
+                    qtw.QMessageBox.critical(None, 'Fail', "you don't have enough meetcoins to complete this transaction.")
+            else:
+                qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero.")
 
     def constant_receive(self):
         rlist, wlist, xlist = select([self.peer.udp_receiver, self.peer.tcp_sock], [], [], 0.01)

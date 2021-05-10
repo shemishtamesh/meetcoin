@@ -333,7 +333,7 @@ class Wallet:
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (float), returns a transaction (Transaction)"""
-        if self.get_balance() >= amount:
+        if self.get_balance() >= amount + TRANSACTION_FEE:
             sender = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
             fee = TRANSACTION_FEE
             transaction_hash = sha256_hash(sender, receiver, amount, fee)
@@ -356,7 +356,6 @@ class Wallet:
             new_block.validator = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
             new_block.signature = signature
             self.transaction_pool = []
-            print(new_block)
             return new_block
 
         return None
@@ -382,11 +381,14 @@ class Wallet:
         validators = self.blockchain.get_validators()
         block_hash_values = [int(block.hash_block().hexdigest(), 16) for block in self.proposed_blocks]
         validator_values = {}
-        for value, block in zip(block_hash_values, self.proposed_blocks):
-            validator_values[block.validator] = value * sqrt(validators[block.validator])
+        for block_hash_value, block in zip(block_hash_values, self.proposed_blocks):
+            validator_values[block.validator] = block_hash_value * sqrt(validators[block.validator])
 
+        print(validator_values)
         if validator_values:
-            return max(validator_values, key=(lambda key: validator_values[key]))
+            leader = max(validator_values, key=(lambda key: validator_values[key]))
+            print(leader)
+            return leader
         else:
             return None
 

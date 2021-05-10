@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinqshRXI.ui'
+## Form generated from reading UI file 'meetcoinRJKKSz.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -706,7 +706,7 @@ class Ui_MainWindow(object):
         self.update_contact_btn.setText(QCoreApplication.translate("MainWindow", u"update selected contact", None))
         self.delete_contact_btn.setText(QCoreApplication.translate("MainWindow", u"delete selected contact", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.edit_delete_contact_tab), QCoreApplication.translate("MainWindow", u"edit\\delete contact", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u"amount (including validator fee): ", None))
+        self.label_5.setText(QCoreApplication.translate("MainWindow", u"amount (not including validator fee): ", None))
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
         self.send_transaction_btn.setText(QCoreApplication.translate("MainWindow", u"sign the transaction and send it", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.make_transaction_tab), QCoreApplication.translate("MainWindow", u"make transaction", None))
