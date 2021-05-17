@@ -18,14 +18,12 @@ from PyQt5 import QtCore as qtc
 # for exception handling:
 import sys
 
-# for block handling:
-import concurrent.futures
-
-if platform.system() == 'Linux':
+if OS_NAME == 'Linux':
     SLASH_SIGN = '/'
-elif platform.system() == 'Windows':
+elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
+# TODO: use pudb to debbug current problem, try opening one, and than opening another one
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -64,6 +62,7 @@ class MainWindow(qtw.QMainWindow):
 
         # setting up networking:
         self.peer = Peer()
+        self.tcp_connected_peers = []
 
         # setting up navigation buttons:
         self.ui.my_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg))  # navigation to my wallet page
@@ -99,9 +98,6 @@ class MainWindow(qtw.QMainWindow):
 
         # set up is_validator boolean
         self.is_validator = False
-
-        # start repeating method for receiving messages:
-        self.constant_receive()
 
     # window functionality:
     def maximize_resize_window(self):
@@ -139,7 +135,7 @@ class MainWindow(qtw.QMainWindow):
                 secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
                                                                         protection=SECRET_KEY_PROTECTION))
 
-        self.finish_entering_wallet()
+        self.request_missing_blocks()
 
     def enter_wallet(self):
         password = self.ui.already_have_wallet_password_in.text()
@@ -147,7 +143,7 @@ class MainWindow(qtw.QMainWindow):
             with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
                 protected_secret_key = secret_key_file.read()
                 self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
-            self.finish_entering_wallet()
+            self.request_missing_blocks()
         except ValueError:
             qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
         except IndexError:
@@ -160,11 +156,12 @@ class MainWindow(qtw.QMainWindow):
             self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
             with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
                 secret_key_file.write(protected_secret_key)
-            self.finish_entering_wallet()
+            self.request_missing_blocks()
         except ValueError:
             qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
 
     def finish_entering_wallet(self):
+
         self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
         self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)  # go to "my wallet" page
         self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
@@ -176,9 +173,8 @@ class MainWindow(qtw.QMainWindow):
         if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
             self.is_validator = True
 
-        self.request_missing_blocks()
-
         self.handle_blocks()  # TODO: maybe use multithreading/processing for this, but probably because multithreading would probably not reduce time and multiprocessing wouldn't work because of memmory
+        self.constant_receive()
 
     # blockchain file:
     def create_blockchain_file(self):
@@ -382,16 +378,18 @@ class MainWindow(qtw.QMainWindow):
                 qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero.")
 
     def constant_receive(self):
-        rlist, wlist, xlist = select([self.peer.udp_receiver, self.peer.tcp_sock], [], [], 0.01)
+        rlist, wlist, xlist = select([self.peer.udp_receiver] + self.tcp_connected_peers, [], [], 0.01)
         for sock in rlist:
-            received_message = self.peer.udp_receive()
             if sock == self.peer.udp_receiver:
+                print("got udp message")
+                received_message = self.peer.udp_receive()
                 self.received_from_udp_socket(received_message)
 
-            if sock == self.peer.tcp_sock:
-                (new_sock, address) = self.peer.tcp_sock.accept()
-                print(f"tcp connected to {address}")
-                self.tcp_connected_peers.append(new_sock)
+            if sock == self.peer.tcp_server:
+                print("got tcp message")
+            #     (new_sock, address) = self.peer.tcp_server.accept()
+            #     print(f"tcp connected to {address}")
+            #     self.tcp_connected_peers.append(new_sock)
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -402,11 +400,39 @@ class MainWindow(qtw.QMainWindow):
         elif type(message) == Block:
             self.wallet.add_proposed_block(message)
             self.add_block_to_proposed_tree(message)
+        elif type(message) == str and message[len("connected")] == "connected":
+            self.send_missing_blocks()
+            print("connected for sending missing blocks")
         else:
             print(message)
 
+    def send_missing_blocks(self):
+        pass
+
     def request_missing_blocks(self):
-        self.peer.request_update_connection()
+        print("in request_missing_blocks")
+        self.ui.stackedWidget.setCurrentWidget(self.ui.updating_blockchain_pg)
+        self.collect_blocks(False)
+
+    def collect_blocks(self, finished_collecting_blocks):
+        missing_blocks = []
+
+        while not finished_collecting_blocks:
+            self.peer.request_update_connection()
+            if self.tcp_connected_peers <= NUMBER_OF_CONNECTED_CLIENTS:
+                rlist, wlist, xlist = select([self.peer.tcp_server] + self.tcp_connected_peers, [], [], 0.01)
+            for sock in rlist:
+                if sock == self.peer.tcp_server:
+                    (new_sock, address) = self.peer.tcp_server.accept()
+                    print(f"tcp connected to {address}")
+                    self.tcp_connected_peers.append(new_sock)
+
+                elif sock in self.tcp_connected_peers:
+                    pass
+
+
+        self.finish_entering_wallet()
+        # TODO: set timeout, and wait until it is finished
 
     # on events:
     def mousePressEvent(self, event):

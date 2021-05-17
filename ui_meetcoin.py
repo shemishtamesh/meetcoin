@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinRJKKSz.ui'
+## Form generated from reading UI file 'meetcoinpLYcgF.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -512,6 +512,27 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.addWidget(self.contacts_list)
 
         self.stackedWidget.addWidget(self.my_wallet_pg)
+        self.updating_blockchain_pg = QWidget()
+        self.updating_blockchain_pg.setObjectName(u"updating_blockchain_pg")
+        self.gridLayout_3 = QGridLayout(self.updating_blockchain_pg)
+        self.gridLayout_3.setSpacing(0)
+        self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.gridLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.frame_13 = QFrame(self.updating_blockchain_pg)
+        self.frame_13.setObjectName(u"frame_13")
+        self.frame_13.setFrameShape(QFrame.StyledPanel)
+        self.frame_13.setFrameShadow(QFrame.Raised)
+        self.gridLayout_4 = QGridLayout(self.frame_13)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.label_4 = QLabel(self.frame_13)
+        self.label_4.setObjectName(u"label_4")
+
+        self.gridLayout_4.addWidget(self.label_4, 0, 0, 1, 1)
+
+
+        self.gridLayout_3.addWidget(self.frame_13, 0, 0, 1, 1)
+
+        self.stackedWidget.addWidget(self.updating_blockchain_pg)
         self.change_wallet_pg = QWidget()
         self.change_wallet_pg.setObjectName(u"change_wallet_pg")
         self.verticalLayout_13 = QVBoxLayout(self.change_wallet_pg)
@@ -665,7 +686,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stackedWidget.setCurrentIndex(3)
+        self.stackedWidget.setCurrentIndex(4)
         self.tabWidget_2.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget_3.setCurrentIndex(0)
@@ -718,6 +739,7 @@ class Ui_MainWindow(object):
         self.label_19.setText(QCoreApplication.translate("MainWindow", u"updated password: ", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"settings", None))
         self.label_28.setText(QCoreApplication.translate("MainWindow", u"contacts list:", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"updating the local blockchain", None))
         self.label_23.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
         self.enter_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"enter wallet", None))
         self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.already_have_wallet_tab), QCoreApplication.translate("MainWindow", u"already have a wallet on this device", None))

@@ -6,6 +6,10 @@ from json2xml.utils import readfromstring
 from json2xml import json2xml
 import xml.etree.ElementTree as et
 
+# for determining os
+import platform
+
+
 CURVE_FOR_KEYS = 'P-256'  # 'NIST P-256'
 STANDARD_FOR_SIGNATURES = 'fips-186-3'
 STAKE_ADDRESS = "STAKE_ADDRESS"
@@ -43,8 +47,9 @@ def sha256_hash(*args):
 
 # for networking:
 RECV_SIZE = 1024 * 10
-UDP_PORT = 50090
-TCP_PORT = 55556
+UDP_PORT = 50000
+TCP_PORT = 50001
+NUMBER_OF_CONNECTED_CLIENTS = 5
 
 
 def json_file_to_xml_string(json_file):
@@ -54,3 +59,22 @@ def json_file_to_xml_string(json_file):
     xml_string = json2xml.Json2xml(data).to_xml()
 
     return et.fromstring(xml_string)[0]  # [0] because json2xml adds an unneeded wrapper
+
+
+OS_NAME = platform.system()
+
+if OS_NAME == 'Linux':
+    import socket
+
+    # def get_ip_address():
+    #     temp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     temp_server.listen(1)
+    #
+    #     temp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     port = 49152
+    #     while True:
+    #         try:
+    #             temp_client.connect(("127.0.0.1", port))
+    #             return temp_server.accept()[0]
+    #         except OSError:
+    #             port += 1
