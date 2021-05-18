@@ -34,15 +34,18 @@ class Peer:
         self.udp_sender.sendto(message.encode('utf-8'), ('255.255.255.255', UDP_PORT))
 
     def udp_send(self, to_send):
-        message = ""
         if type(to_send) == Transaction:
-            message = "transaction:" + to_send.serialize()
+            self.udp_send_raw("transaction:" + to_send.serialize())
         elif type(to_send) == Block:
-            message = "block:" + to_send.serialize()
+            self.udp_send_raw("block:" + to_send.serialize())
         else:
-            message = to_send
+            self.udp_send_raw(to_send)
 
-        self.udp_send_raw(message)
+    def tcp_client_send(self, to_send):
+        if type(to_send) == Block:
+            self.tcp_client.send("block:" + to_send.serialaize())
+        else:
+            self.tcp_client.send(to_send)
 
     def request_update_connection(self):
         print("in request_update_connection")
@@ -72,8 +75,6 @@ class Peer:
                 return f"connected to {(sender_address[0], TCP_PORT)}"
             except OSError:
                 return "can't connect"
-                print("can't connect")
-
 
 if __name__ == "__main__":
     Peer()

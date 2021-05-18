@@ -8,7 +8,6 @@ from meetcoin import *
 # for files
 from random import randint
 import os
-import platform
 
 # for gui:
 from ui_meetcoin import Ui_MainWindow
@@ -23,7 +22,6 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
-# TODO: use pudb to debbug current problem, try opening one, and than opening another one
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -56,9 +54,6 @@ class MainWindow(qtw.QMainWindow):
         self.ui.recreate_wallet_btn.clicked.connect(self.recreate_wallet)
         self.ui.enter_wallet_btn.clicked.connect(self.enter_wallet)
         self.wallet = None
-
-        # # update blockchain:
-        # self.request_missing_blocks()
 
         # setting up networking:
         self.peer = Peer()
@@ -93,10 +88,10 @@ class MainWindow(qtw.QMainWindow):
         # networking related:
         self.ui.send_transaction_btn.clicked.connect(self.send_transaction)
 
-        # set up password change change:
+        # set up password change:
         self.ui.change_password_btn.clicked.connect(self.update_password)
 
-        # set up is_validator boolean
+        # set up is_validator boolean:
         self.is_validator = False
 
     # window functionality:
@@ -378,18 +373,22 @@ class MainWindow(qtw.QMainWindow):
                 qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero.")
 
     def constant_receive(self):
-        rlist, wlist, xlist = select([self.peer.udp_receiver] + self.tcp_connected_peers, [], [], 0.01)
+        rlist, wlist, xlist = select([self.peer.udp_receiver, self.peer.tcp_client], [], [], 0.01)
         for sock in rlist:
             if sock == self.peer.udp_receiver:
                 print("got udp message")
                 received_message = self.peer.udp_receive()
                 self.received_from_udp_socket(received_message)
 
-            if sock == self.peer.tcp_server:
-                print("got tcp message")
-            #     (new_sock, address) = self.peer.tcp_server.accept()
-            #     print(f"tcp connected to {address}")
-            #     self.tcp_connected_peers.append(new_sock)
+            if sock == self.peer.tcp_client:
+                received_message = sock.recv(RECV_SIZE).decode()
+                if received_message[len("position "):] == "position ":
+                    block_position_from_end_of_chain_to_send = int(received_message[:len("position ")])
+                    self.send_a_missing_block(block_position_from_end_of_chain_to_send)
+                elif received_message[len("finish"):] == "finish":
+                    print("close connection")
+                    sock.close()
+                    self.peer.tcp_client = socket(AF_INET, SOCK_STREAM)
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -401,25 +400,28 @@ class MainWindow(qtw.QMainWindow):
             self.wallet.add_proposed_block(message)
             self.add_block_to_proposed_tree(message)
         elif type(message) == str and message[len("connected")] == "connected":
-            self.send_missing_blocks()
+            self.send_a_missing_block(self.wallet.blockchain.chain[-1].block_number)
             print("connected for sending missing blocks")
         else:
             print(message)
 
-    def send_missing_blocks(self):
-        pass
+    def send_a_missing_block(self, position):
+        block_to_send = [block for block in self.wallet.blockchain.chain if block.block_number == position][0]
+        self.peer.tcp_client_send(block_to_send)
 
     def request_missing_blocks(self):
         print("in request_missing_blocks")
         self.ui.stackedWidget.setCurrentWidget(self.ui.updating_blockchain_pg)
-        self.collect_blocks(False)
+        self.collect_blocks()
 
-    def collect_blocks(self, finished_collecting_blocks):
-        missing_blocks = []
+    def collect_blocks(self):
+        missing_blocks_by_peer = {}
+        finished_collecting_blocks = False
+        self.peer.request_update_connection()
 
-        while not finished_collecting_blocks:
-            self.peer.request_update_connection()
-            if self.tcp_connected_peers <= NUMBER_OF_CONNECTED_CLIENTS:
+        def collect_blocks_networking():
+            rlist, wlist, xlist = [], [], []
+            if len(self.tcp_connected_peers) <= NUMBER_OF_CONNECTED_CLIENTS:
                 rlist, wlist, xlist = select([self.peer.tcp_server] + self.tcp_connected_peers, [], [], 0.01)
             for sock in rlist:
                 if sock == self.peer.tcp_server:
@@ -428,11 +430,24 @@ class MainWindow(qtw.QMainWindow):
                     self.tcp_connected_peers.append(new_sock)
 
                 elif sock in self.tcp_connected_peers:
-                    pass
+                    received_message = sock.recv(RECV_SIZE)
+                    if received_message[len("Block"):] == "Block":
+                        received_block = Block.deserialize(received_message)
+                        if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:
+                            if sock not in missing_blocks_by_peer:
+                                missing_blocks_by_peer[sock] = []
+                            missing_blocks_by_peer[sock].append(received_block)
+                            sock.send(f"position {received_block.block_number - 1}".encode('utf-8'))
+                        else:
+                            sock.send("finished".encode('utf-8'))
 
+            if not finished_collecting_blocks:
+                qtc.QTimer.singleShot(10000, self.collect_blocks)
+            else:
+                self.finish_entering_wallet()
+                # TODO: set timeout, and wait until it is finished
 
-        self.finish_entering_wallet()
-        # TODO: set timeout, and wait until it is finished
+        collect_blocks_networking()
 
     # on events:
     def mousePressEvent(self, event):
