@@ -94,6 +94,10 @@ class MainWindow(qtw.QMainWindow):
         # set up is_validator boolean:
         self.is_validator = False
 
+        # set up initial load screen:
+        self.ui.stop_waiting_button.clicked.connect(self.stop_waiting_for_blocks)
+        self.finished_collecting_missing_blocks = False
+
     # window functionality:
     def maximize_resize_window(self):
         if not self.is_maximized:
@@ -156,7 +160,6 @@ class MainWindow(qtw.QMainWindow):
             qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
 
     def finish_entering_wallet(self):
-
         self.ui.menu_frame.show()  # show the navigation menu after a wallet is created
         self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg)  # go to "my wallet" page
         self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
@@ -416,7 +419,6 @@ class MainWindow(qtw.QMainWindow):
 
     def collect_blocks(self):
         missing_blocks_by_peer = {}
-        finished_collecting_blocks = False
         self.peer.request_update_connection()
 
         def collect_blocks_networking():
@@ -441,13 +443,16 @@ class MainWindow(qtw.QMainWindow):
                         else:
                             sock.send("finished".encode('utf-8'))
 
-            if not finished_collecting_blocks:
-                qtc.QTimer.singleShot(10000, self.collect_blocks)
+            if not self.finished_collecting_missing_blocks:
+                qtc.QTimer.singleShot(1000, collect_blocks_networking)
             else:
                 self.finish_entering_wallet()
-                # TODO: set timeout, and wait until it is finished
+                # TODO: do something with the collected blocks after finish
 
         collect_blocks_networking()
+
+    def stop_waiting_for_blocks(self):
+        self.finished_collecting_missing_blocks = True
 
     # on events:
     def mousePressEvent(self, event):
