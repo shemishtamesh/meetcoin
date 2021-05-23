@@ -1,7 +1,7 @@
 from meetcoin import Transaction, Block
 from meetcoin_utils import *
 from socket import *
-# TODO: request chain update by broadcasting a request and then tcp connect to first x peers to get blocks from them, find incentive for people to actually send the blocks.
+# TODO: request chain update_particle by broadcasting a request and then tcp connect to first x peers to get blocks from them, find incentive for people to actually send the blocks.
 
 
 if OS_NAME == "Linux":
@@ -27,7 +27,7 @@ class Peer:
         # tcp sockets:
         self.tcp_server = None
 
-        self.tcp_client = socket(AF_INET, SOCK_STREAM)
+        self.tcp_client = None
 
     # sending:
     def udp_send_raw(self, message):
@@ -35,20 +35,24 @@ class Peer:
 
     def udp_send(self, to_send):
         if type(to_send) == Transaction:
+            print("udp sending: " + "transaction:" + str(type(to_send)))
             self.udp_send_raw("transaction:" + to_send.serialize())
         elif type(to_send) == Block:
-            self.udp_send_raw("block:" + to_send.serialize())
+            print("udp sending: " + "block:" + str(type(to_send)))
+            self.udp_send_raw("udp sending: " + "block:" + to_send.serialize())
         else:
+            print("udp sending: " + to_send)
             self.udp_send_raw(to_send)
 
     def tcp_client_send(self, to_send):
         if type(to_send) == Block:
-            self.tcp_client.send("block:" + to_send.serialaize())
+            print("tcp_client sending: " + str(type(to_send)))
+            self.tcp_client.send(("Block: " + to_send.serialize()).encode('utf-8'))
         else:
-            self.tcp_client.send(to_send)
+            print("tcp_client sending: " + str(type(to_send)))
+            self.tcp_client.send(to_send.encode('utf-8'))
 
     def request_update_connection(self):
-        print("in request_update_connection")
         self.tcp_server = socket(AF_INET, SOCK_STREAM)
         self.tcp_server.bind(("0.0.0.0", TCP_PORT))
         self.tcp_server.listen(NUMBER_OF_CONNECTED_CLIENTS)
@@ -61,6 +65,7 @@ class Peer:
     def udp_receive(self):
         (received_message, sender_address) = self.udp_receive_raw()
         received_message = received_message.decode('utf-8')
+        print(f"received_message: {received_message}, sender_address: {sender_address}")
         if received_message[:len("transaction:")] == "transaction:":
             return Transaction.deserialize(received_message[len("transaction:"):])
 
@@ -68,9 +73,8 @@ class Peer:
             return Block.deserialize(received_message[len("block:"):])
 
         if received_message == "request_update_connection" and sender_address[0] != host_ip:
-            print("trying to connect")
-            print(sender_address)
             try:
+                self.tcp_client = socket(AF_INET, SOCK_STREAM)
                 self.tcp_client.connect((sender_address[0], TCP_PORT))
                 return f"connected to {(sender_address[0], TCP_PORT)}"
             except OSError:

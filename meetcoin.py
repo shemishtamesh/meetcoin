@@ -224,7 +224,7 @@ class Blockchain:
         return block
 
     def replace_chain_if_more_reliable(self, new_chain):
-        # TODO: update this to something secure, longer isn't necessarily more secure in pos, probably get more than one chain compare them and choose the best
+        # TODO: update_particle this to something secure, longer isn't necessarily more secure in pos, probably get more than one chain compare them and choose the best
         """replaces the chain if the new chain is longer and valid"""
         if len(new_chain) > len(self.chain) and \
                 self.is_chain_valid(new_chain):

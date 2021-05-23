@@ -22,7 +22,8 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
-
+# TODO: print all tcp interactions to see why collecting blocks doesn't get finished
+# TODO: try to get blocks from two peers
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
         # creating the window:
@@ -72,7 +73,7 @@ class MainWindow(qtw.QMainWindow):
                 if type(json.load(contact_list_file)) != dict:
                     contact_list_file.seek(0)
                     json.dump({}, contact_list_file)
-        except (IOError, json.decoder.JSONDecodeError) as e:
+        except (IOError, json.decoder.JSONDecodeError):
             with open(f"data{SLASH_SIGN}contacts list.json", "w") as contact_list_file:
                 contact_list_file.write("{}")
         with open(f"data{SLASH_SIGN}contacts list.json", "r") as contact_list_file:
@@ -181,7 +182,7 @@ class MainWindow(qtw.QMainWindow):
                 if type(json.load(blockchain_file)) != dict:
                     blockchain_file.seek(0)
                     json.dump(self.wallet.blockchain.serialize(), blockchain_file, indent=4)
-        except (IOError, json.decoder.JSONDecodeError) as e:
+        except (IOError, json.decoder.JSONDecodeError):
             with open(f"data{SLASH_SIGN}blockchain.json", "w") as blockchain_file:
                 blockchain_file.write(self.wallet.blockchain.serialize())
         with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
@@ -266,7 +267,7 @@ class MainWindow(qtw.QMainWindow):
         with open(f"data{SLASH_SIGN}contacts list.json", "r+") as contact_list_file:
             data = json.load(contact_list_file)
             if name not in data:
-                data.update(new_contact)
+                data.update_particle(new_contact, )
                 contact_list_file.seek(0)
                 json.dump(data, contact_list_file)
 
@@ -335,7 +336,7 @@ class MainWindow(qtw.QMainWindow):
             self.ui.transaction_pool_tree.clear()
             self.ui.proposed_blocks_tree.clear()
 
-            # update blockchain file and blockchain tree:
+            # update_particle blockchain file and blockchain tree:
             self.update_blockchain_file()
             with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
                 self.put_json_chain_on_tree(blockchain_file)
@@ -376,22 +377,23 @@ class MainWindow(qtw.QMainWindow):
                 qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero.")
 
     def constant_receive(self):
-        rlist, wlist, xlist = select([self.peer.udp_receiver, self.peer.tcp_client], [], [], 0.01)
+        if self.peer.tcp_client:
+            rlist, wlist, xlist = select([self.peer.udp_receiver, self.peer.tcp_client], [], [], 0.01)
+        else:
+            rlist, wlist, xlist = select([self.peer.udp_receiver], [], [], 0.01)
         for sock in rlist:
             if sock == self.peer.udp_receiver:
-                print("got udp message")
                 received_message = self.peer.udp_receive()
                 self.received_from_udp_socket(received_message)
 
             if sock == self.peer.tcp_client:
                 received_message = sock.recv(RECV_SIZE).decode()
+                print(f"tcp_client_received: {received_message}")
                 if received_message[len("position "):] == "position ":
                     block_position_from_end_of_chain_to_send = int(received_message[:len("position ")])
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
-                elif received_message[len("finish"):] == "finish":
-                    print("close connection")
+                elif received_message[len("finished"):] == "finished":
                     sock.close()
-                    self.peer.tcp_client = socket(AF_INET, SOCK_STREAM)
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -402,9 +404,8 @@ class MainWindow(qtw.QMainWindow):
         elif type(message) == Block:
             self.wallet.add_proposed_block(message)
             self.add_block_to_proposed_tree(message)
-        elif type(message) == str and message[len("connected")] == "connected":
+        elif type(message) == str and message[:len("connected")] == "connected":
             self.send_a_missing_block(self.wallet.blockchain.chain[-1].block_number)
-            print("connected for sending missing blocks")
         else:
             print(message)
 
@@ -413,13 +414,13 @@ class MainWindow(qtw.QMainWindow):
         self.peer.tcp_client_send(block_to_send)
 
     def request_missing_blocks(self):
-        print("in request_missing_blocks")
         self.ui.stackedWidget.setCurrentWidget(self.ui.updating_blockchain_pg)
         self.collect_blocks()
 
     def collect_blocks(self):
         missing_blocks_by_peer = {}
         self.peer.request_update_connection()
+        finished_so_far = 0
 
         def collect_blocks_networking():
             rlist, wlist, xlist = [], [], []
@@ -432,8 +433,13 @@ class MainWindow(qtw.QMainWindow):
                     self.tcp_connected_peers.append(new_sock)
 
                 elif sock in self.tcp_connected_peers:
-                    received_message = sock.recv(RECV_SIZE)
-                    if received_message[len("Block"):] == "Block":
+                    received_message = sock.recv(RECV_SIZE).decode()
+                    if received_message[:len("Block: ")] == "Block: ":
+                        received_message = received_message[len("Block: "):]
+                        print(f"tcp_client_received: Block")
+                        # print('######################################')
+                        # print(received_message)
+                        # print('######################################')
                         received_block = Block.deserialize(received_message)
                         if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:
                             if sock not in missing_blocks_by_peer:
@@ -442,12 +448,18 @@ class MainWindow(qtw.QMainWindow):
                             sock.send(f"position {received_block.block_number - 1}".encode('utf-8'))
                         else:
                             sock.send("finished".encode('utf-8'))
+                            if finished_so_far >= NUMBER_OF_CONNECTED_CLIENTS:
+                                self.finished_collecting_missing_blocks = True
+
+                    else:
+                        print(received_message)
 
             if not self.finished_collecting_missing_blocks:
                 qtc.QTimer.singleShot(1000, collect_blocks_networking)
             else:
+                self.peer.close_server()  # TODO: implement
+                self.handle_collected_blocks()  # TODO: implement
                 self.finish_entering_wallet()
-                # TODO: do something with the collected blocks after finish
 
         collect_blocks_networking()
 
@@ -459,16 +471,16 @@ class MainWindow(qtw.QMainWindow):
         self.last_click_on_empty_space = event.globalPos()
 
     def resizeEvent(self, event):
-            qtw.QMainWindow.resizeEvent(self, event)
-            rect = self.rect()
-            # top left grip doesn't need to be moved
-            # top right
-            self.grips[1].move(rect.right() - self.gripSize, 0)
-            # bottom right
-            self.grips[2].move(
-                rect.right() - self.gripSize, rect.bottom() - self.gripSize)
-            # bottom left
-            self.grips[3].move(0, rect.bottom() - self.gripSize)
+        qtw.QMainWindow.resizeEvent(self, event)
+        rect = self.rect()
+        # top left grip doesn't need to be moved
+        # top right
+        self.grips[1].move(rect.right() - self.gripSize, 0)
+        # bottom right
+        self.grips[2].move(
+            rect.right() - self.gripSize, rect.bottom() - self.gripSize)
+        # bottom left
+        self.grips[3].move(0, rect.bottom() - self.gripSize)
 
 
 if __name__ == "__main__":

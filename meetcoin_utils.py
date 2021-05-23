@@ -49,7 +49,7 @@ def sha256_hash(*args):
 RECV_SIZE = 1024 * 10
 UDP_PORT = 50000
 TCP_PORT = 50001
-NUMBER_OF_CONNECTED_CLIENTS = 5
+NUMBER_OF_CONNECTED_CLIENTS = 2
 
 
 def json_file_to_xml_string(json_file):
