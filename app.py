@@ -267,7 +267,7 @@ class MainWindow(qtw.QMainWindow):
         with open(f"data{SLASH_SIGN}contacts list.json", "r+") as contact_list_file:
             data = json.load(contact_list_file)
             if name not in data:
-                data.update_particle(new_contact, )
+                data.update(new_contact, )
                 contact_list_file.seek(0)
                 json.dump(data, contact_list_file)
 
@@ -394,7 +394,7 @@ class MainWindow(qtw.QMainWindow):
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
                 elif received_message[len("finished"):] == "finished":
                     sock.close()
-
+# TODO: dlete :  meetcoin (file://DESKTOP-JB55GAG/Users/yuval/OneDrive/מסמכים/GitHub/meetcoin)
         qtc.QTimer.singleShot(100, self.constant_receive)
 
     def received_from_udp_socket(self, message):
