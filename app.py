@@ -386,24 +386,15 @@ class MainWindow(qtw.QMainWindow):
                 self.received_from_udp_socket(received_message)
 
             if sock == self.peer.tcp_client:
-                print("got a tcp on client")
                 try:
                     received_message = sock.recv(RECV_SIZE).decode()
                 except ConnectionResetError:
                     received_message = ''
-                print("tcp received:", received_message)
-                print(received_message[len("position "):] == "position ")
-                print(received_message[len("position "):])
-                print("position ")
-                print()
                 if received_message[:len("position ")] == "position ":
-                    print("got hereeeeeee")
                     block_position_from_end_of_chain_to_send = int(received_message[len("position "):])
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
-                    print("sent a block on tcp")
                 elif received_message[len("finished"):] == "finished" or received_message == '':
                     self.peer.close_client()
-                    print("closed client")
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -416,7 +407,6 @@ class MainWindow(qtw.QMainWindow):
             self.add_block_to_proposed_tree(message)
         elif type(message) == str and message[:len("connected")] == "connected":
             self.send_a_missing_block(self.wallet.blockchain.chain[-1].block_number)
-            print("sent first block on tcp")
         else:
             print(message)
 
@@ -451,7 +441,6 @@ class MainWindow(qtw.QMainWindow):
                 elif sock in tcp_connected_peers:
                     received_message = sock.recv(RECV_SIZE).decode()
                     if received_message[:len("Block: ")] == "Block: ":
-                        print("got collected block")
                         received_message = received_message[len("Block: "):]
                         received_block = Block.deserialize(received_message)
                         if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:  # if block number isn't alewady in chain
@@ -459,10 +448,8 @@ class MainWindow(qtw.QMainWindow):
                                 missing_blocks_by_peer[sock] = []
                             missing_blocks_by_peer[sock].append(received_block)
                             sock.send(f"position {received_block.block_number - 1}".encode('utf-8'))
-                            print(f"sent: position {received_block.block_number - 1}")
                         else:
                             sock.send("finished".encode('utf-8'))
-                            print("sent: finished")
                             finished_so_far += 1
                             if finished_so_far >= NUMBER_OF_CONNECTED_CLIENTS:
                                 finished_collecting_missing_blocks = True
