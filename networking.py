@@ -35,7 +35,6 @@ class Peer:
 
     def udp_send(self, to_send):
         if type(to_send) == Transaction:
-            print("udp sending: " + "transaction:" + str(type(to_send)))
             self.udp_send_raw("transaction:" + to_send.serialize())
         elif type(to_send) == Block:
             print("udp sending: " + "block:" + str(type(to_send)))
@@ -54,17 +53,21 @@ class Peer:
 
     def request_update_connection(self):
         self.tcp_server = socket(AF_INET, SOCK_STREAM)
+        if OS_NAME == 'Linux':
+            self.tcp_server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.tcp_server.bind(("0.0.0.0", TCP_PORT))
         self.tcp_server.listen(NUMBER_OF_CONNECTED_CLIENTS)
         self.udp_send("request_update_connection")
 
     def close_server(self):
-        self.tcp_server.close()
-        self.tcp_server = None
+        if self.tcp_server:
+            self.tcp_server.close()
+            self.tcp_server = None
 
     def close_client(self):
-        self.tcp_client.close()
-        self.tcp_client = None
+        if self.tcp_client:
+            self.tcp_client.close()
+            self.tcp_client = None
 
     # receiving
     def udp_receive_raw(self):
@@ -73,7 +76,6 @@ class Peer:
     def udp_receive(self):
         (received_message, sender_address) = self.udp_receive_raw()
         received_message = received_message.decode('utf-8')
-        print(f"received_message: {received_message}, sender_address: {sender_address}")
         if received_message[:len("transaction:")] == "transaction:":
             return Transaction.deserialize(received_message[len("transaction:"):])
 
@@ -86,7 +88,9 @@ class Peer:
                 self.tcp_client.connect((sender_address[0], TCP_PORT))
                 return f"connected to {(sender_address[0], TCP_PORT)}"
             except OSError:
+                self.tcp_client = None
                 return "can't connect"
+
 
 if __name__ == "__main__":
     Peer()

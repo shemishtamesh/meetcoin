@@ -22,6 +22,7 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
+# TODO: fix opening program multiple times, for some reason it says that the server socket is already in use.
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -33,7 +34,7 @@ class MainWindow(qtw.QMainWindow):
         self.ui.setupUi(self)
 
         # setting up title bar and grips to resize the window:
-        self.ui.exit_button.clicked.connect(lambda: self.close())
+        self.ui.exit_button.clicked.connect(self.close_app)
         self.is_maximized = False  # for maximizing and resizing the window using the maximize button
         self.last_click_on_empty_space = None
         self.ui.maximize_button.clicked.connect(self.maximize_resize_window)
@@ -95,7 +96,7 @@ class MainWindow(qtw.QMainWindow):
 
         # set up initial load screen:
         self.ui.stop_waiting_button.clicked.connect(self.stop_waiting_for_blocks)
-        self.finished_collecting_missing_blocks = False
+        self.finished_collecting_missing_blocks_by_button = False
 
     # window functionality:
     def maximize_resize_window(self):
@@ -385,13 +386,16 @@ class MainWindow(qtw.QMainWindow):
                 self.received_from_udp_socket(received_message)
 
             if sock == self.peer.tcp_client:
-                received_message = sock.recv(RECV_SIZE).decode()
+                try:
+                    received_message = sock.recv(RECV_SIZE).decode()
+                except ConnectionResetError:
+                    received_message = ''
                 print(f"tcp_client_received: {received_message}")
                 if received_message[len("position "):] == "position ":
                     block_position_from_end_of_chain_to_send = int(received_message[:len("position ")])
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
-                elif received_message[len("finished"):] == "finished":
-                    self.close_clinet()
+                elif received_message[len("finished"):] == "finished" or received_message == '':
+                    self.peer.close_client()
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -420,10 +424,12 @@ class MainWindow(qtw.QMainWindow):
         self.peer.request_update_connection()
         finished_so_far = 0
         tcp_connected_peers = []
+        finished_collecting_missing_blocks = False
 
         def collect_blocks_networking():
             nonlocal finished_so_far
             nonlocal tcp_connected_peers
+            nonlocal finished_collecting_missing_blocks
 
             rlist, wlist, xlist = [], [], []
             if len(tcp_connected_peers) <= NUMBER_OF_CONNECTED_CLIENTS:
@@ -447,10 +453,9 @@ class MainWindow(qtw.QMainWindow):
                             sock.send(f"position {received_block.block_number - 1}".encode('utf-8'))
                         else:
                             sock.send("finished".encode('utf-8'))
+                            finished_so_far += 1
                             if finished_so_far >= NUMBER_OF_CONNECTED_CLIENTS:
-                                self.finished_collecting_missing_blocks = True
-                            else:
-                                finished_so_far += 1
+                                finished_collecting_missing_blocks = True
 
                     elif received_message == '':
                         tcp_connected_peers.remove(sock)
@@ -458,42 +463,49 @@ class MainWindow(qtw.QMainWindow):
                     else:
                         print(received_message)
 
-            if not self.finished_collecting_missing_blocks:
+            if not (self.finished_collecting_missing_blocks_by_button or finished_collecting_missing_blocks):
                 qtc.QTimer.singleShot(1000, collect_blocks_networking)
             else:
                 tcp_connected_peers = []
                 self.peer.close_server()
-                self.handle_collected_blocks(list(missing_blocks_by_peer.values()))
+                if finished_collecting_missing_blocks:
+                    self.handle_collected_blocks(list(missing_blocks_by_peer.values()))
                 self.finish_entering_wallet()
 
         collect_blocks_networking()
 
     def stop_waiting_for_blocks(self):
-        self.finished_collecting_missing_blocks = True
+        self.finished_collecting_missing_blocks_by_button = True
 
     def handle_collected_blocks(self, collected_blocks_lists_list):
-        valid_collected_blocks_lists_list = []
-        for collected_blocks_lists in collected_blocks_lists_list:
-            for collected_block in collected_blocks_lists:
-                if collected_block.is_valid():
-                    valid_collected_blocks_lists_list.append(collected_blocks_lists)
+        if collected_blocks_lists_list:
+            valid_collected_blocks_lists_list = []
+            for collected_blocks_lists in collected_blocks_lists_list:
+                for collected_block in collected_blocks_lists:
+                    if collected_block.is_valid():
+                        valid_collected_blocks_lists_list.append(collected_blocks_lists)
 
-        valid_collected_blocks_lists_list_tuples = []
-        for valid_collected_blocks_lists in valid_collected_blocks_lists_list:
-            valid_collected_blocks_list_tuples = []
-            for valid_collected_block in valid_collected_blocks_lists:
-                valid_collected_blocks_list_tuples.append((valid_collected_block.block_number, valid_collected_block.hash_block))
-            valid_collected_blocks_lists_list_tuples.append(valid_collected_blocks_list_tuples)
+            valid_collected_blocks_lists_list_tuples = []
+            for valid_collected_blocks_lists in valid_collected_blocks_lists_list:
+                valid_collected_blocks_list_tuples = []
+                for valid_collected_block in valid_collected_blocks_lists:
+                    valid_collected_blocks_list_tuples.append((valid_collected_block.block_number, valid_collected_block.hash_block))
+                valid_collected_blocks_lists_list_tuples.append(valid_collected_blocks_list_tuples)
 
-        correct_valid_collected_blocks_list_tuples = most_frequent(valid_collected_blocks_lists_list_tuples)
-        index_of_correct_valid_collected_blocks_list = valid_collected_blocks_lists_list_tuples.index(correct_valid_collected_blocks_list_tuples)
-        correct_valid_collected_blocks_list = valid_collected_blocks_lists_list[index_of_correct_valid_collected_blocks_list]
+            correct_valid_collected_blocks_list_tuples = most_frequent(valid_collected_blocks_lists_list_tuples)
+            index_of_correct_valid_collected_blocks_list = valid_collected_blocks_lists_list_tuples.index(correct_valid_collected_blocks_list_tuples)
+            correct_valid_collected_blocks_list = valid_collected_blocks_lists_list[index_of_correct_valid_collected_blocks_list]
 
-        for correct_valid_collected_block in correct_valid_collected_blocks_list:
-            self.wallet.add_proposed_block(correct_valid_collected_block)
-            if not self.wallet.add_a_block_to_chain(correct_valid_collected_block):
-                self.request_missing_blocks()
+            for correct_valid_collected_block in correct_valid_collected_blocks_list:
+                self.wallet.add_proposed_block(correct_valid_collected_block)
+                if not self.wallet.add_a_block_to_chain(correct_valid_collected_block):
+                    self.request_missing_blocks()
 
+    # closing the app:
+    def close_app(self):
+        self.peer.close_server()
+        self.peer.close_client()
+        self.close()
 
     # on events:
     def mousePressEvent(self, event):
