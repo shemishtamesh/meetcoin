@@ -386,16 +386,24 @@ class MainWindow(qtw.QMainWindow):
                 self.received_from_udp_socket(received_message)
 
             if sock == self.peer.tcp_client:
+                print("got a tcp on client")
                 try:
                     received_message = sock.recv(RECV_SIZE).decode()
                 except ConnectionResetError:
                     received_message = ''
-                print(f"tcp_client_received: {received_message}")
-                if received_message[len("position "):] == "position ":
-                    block_position_from_end_of_chain_to_send = int(received_message[:len("position ")])
+                print("tcp received:", received_message)
+                print(received_message[len("position "):] == "position ")
+                print(received_message[len("position "):])
+                print("position ")
+                print()
+                if received_message[:len("position ")] == "position ":
+                    print("got hereeeeeee")
+                    block_position_from_end_of_chain_to_send = int(received_message[len("position "):])
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
+                    print("sent a block on tcp")
                 elif received_message[len("finished"):] == "finished" or received_message == '':
                     self.peer.close_client()
+                    print("closed client")
 
         qtc.QTimer.singleShot(100, self.constant_receive)
 
@@ -408,6 +416,7 @@ class MainWindow(qtw.QMainWindow):
             self.add_block_to_proposed_tree(message)
         elif type(message) == str and message[:len("connected")] == "connected":
             self.send_a_missing_block(self.wallet.blockchain.chain[-1].block_number)
+            print("sent first block on tcp")
         else:
             print(message)
 
@@ -437,22 +446,23 @@ class MainWindow(qtw.QMainWindow):
             for sock in rlist:
                 if sock == self.peer.tcp_server:
                     (new_sock, address) = self.peer.tcp_server.accept()
-                    print(f"tcp connected to {address}")
                     tcp_connected_peers.append(new_sock)
 
                 elif sock in tcp_connected_peers:
                     received_message = sock.recv(RECV_SIZE).decode()
                     if received_message[:len("Block: ")] == "Block: ":
+                        print("got collected block")
                         received_message = received_message[len("Block: "):]
-                        print(f"tcp_client_received: Block")
                         received_block = Block.deserialize(received_message)
                         if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:  # if block number isn't alewady in chain
                             if sock not in missing_blocks_by_peer:
                                 missing_blocks_by_peer[sock] = []
                             missing_blocks_by_peer[sock].append(received_block)
                             sock.send(f"position {received_block.block_number - 1}".encode('utf-8'))
+                            print(f"sent: position {received_block.block_number - 1}")
                         else:
                             sock.send("finished".encode('utf-8'))
+                            print("sent: finished")
                             finished_so_far += 1
                             if finished_so_far >= NUMBER_OF_CONNECTED_CLIENTS:
                                 finished_collecting_missing_blocks = True
@@ -482,7 +492,7 @@ class MainWindow(qtw.QMainWindow):
             valid_collected_blocks_lists_list = []
             for collected_blocks_lists in collected_blocks_lists_list:
                 for collected_block in collected_blocks_lists:
-                    if collected_block.is_valid():
+                    if collected_block.is_valid(self.wallet.blockchain):
                         valid_collected_blocks_lists_list.append(collected_blocks_lists)
 
             valid_collected_blocks_lists_list_tuples = []
@@ -498,8 +508,11 @@ class MainWindow(qtw.QMainWindow):
 
             for correct_valid_collected_block in correct_valid_collected_blocks_list:
                 self.wallet.add_proposed_block(correct_valid_collected_block)
-                if not self.wallet.add_a_block_to_chain(correct_valid_collected_block):
+                if not self.wallet.add_a_block_to_chain():
                     self.request_missing_blocks()
+
+            with open(f"data{SLASH_SIGN}blockchain.json", "w") as blockchain_file:
+                pass
 
     # closing the app:
     def close_app(self):

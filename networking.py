@@ -37,18 +37,14 @@ class Peer:
         if type(to_send) == Transaction:
             self.udp_send_raw("transaction:" + to_send.serialize())
         elif type(to_send) == Block:
-            print("udp sending: " + "block:" + str(type(to_send)))
-            self.udp_send_raw("udp sending: " + "block:" + to_send.serialize())
+            self.udp_send_raw("block:" + to_send.serialize())
         else:
-            print("udp sending: " + to_send)
             self.udp_send_raw(to_send)
 
     def tcp_client_send(self, to_send):
         if type(to_send) == Block:
-            print("tcp_client sending: " + str(type(to_send)))
             self.tcp_client.send(("Block: " + to_send.serialize()).encode('utf-8'))
         else:
-            print("tcp_client sending: " + str(type(to_send)))
             self.tcp_client.send(to_send.encode('utf-8'))
 
     def request_update_connection(self):

@@ -384,10 +384,8 @@ class Wallet:
         for block_hash_value, block in zip(block_hash_values, self.proposed_blocks):
             validator_values[block.validator] = block_hash_value * sqrt(validators[block.validator])
 
-        print(validator_values)
         if validator_values:
             leader = max(validator_values, key=(lambda key: validator_values[key]))
-            print(leader)
             return leader
         else:
             return None

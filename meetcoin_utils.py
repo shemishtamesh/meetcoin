@@ -65,10 +65,13 @@ OS_NAME = platform.system()
 
 
 def most_frequent(List):
-    dict = {}
-    count, itm = 0, ''
-    for item in reversed(List):
-        dict[item] = dict.get(item, 0) + 1
-        if dict[item] >= count :
-            count, itm = dict[item], item
-    return(itm)
+    counter = 0
+    num = List[0]
+
+    for i in List:
+        curr_frequency = List.count(i)
+        if curr_frequency > counter:
+            counter = curr_frequency
+            num = i
+
+    return num
