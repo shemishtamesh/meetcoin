@@ -22,8 +22,7 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
-# TODO: print all tcp interactions to see why collecting blocks doesn't get finished
-# TODO: try to get blocks from two peers
+
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
         # creating the window:
@@ -58,7 +57,6 @@ class MainWindow(qtw.QMainWindow):
 
         # setting up networking:
         self.peer = Peer()
-        self.tcp_connected_peers = []
 
         # setting up navigation buttons:
         self.ui.my_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg))  # navigation to my wallet page
@@ -393,8 +391,8 @@ class MainWindow(qtw.QMainWindow):
                     block_position_from_end_of_chain_to_send = int(received_message[:len("position ")])
                     self.send_a_missing_block(block_position_from_end_of_chain_to_send)
                 elif received_message[len("finished"):] == "finished":
-                    sock.close()
-# TODO: dlete :  meetcoin (file://DESKTOP-JB55GAG/Users/yuval/OneDrive/מסמכים/GitHub/meetcoin)
+                    self.close_clinet()
+
         qtc.QTimer.singleShot(100, self.constant_receive)
 
     def received_from_udp_socket(self, message):
@@ -421,27 +419,28 @@ class MainWindow(qtw.QMainWindow):
         missing_blocks_by_peer = {}
         self.peer.request_update_connection()
         finished_so_far = 0
+        tcp_connected_peers = []
 
         def collect_blocks_networking():
+            nonlocal finished_so_far
+            nonlocal tcp_connected_peers
+
             rlist, wlist, xlist = [], [], []
-            if len(self.tcp_connected_peers) <= NUMBER_OF_CONNECTED_CLIENTS:
-                rlist, wlist, xlist = select([self.peer.tcp_server] + self.tcp_connected_peers, [], [], 0.01)
+            if len(tcp_connected_peers) <= NUMBER_OF_CONNECTED_CLIENTS:
+                rlist, wlist, xlist = select([self.peer.tcp_server] + tcp_connected_peers, [], [], 0.01)
             for sock in rlist:
                 if sock == self.peer.tcp_server:
                     (new_sock, address) = self.peer.tcp_server.accept()
                     print(f"tcp connected to {address}")
-                    self.tcp_connected_peers.append(new_sock)
+                    tcp_connected_peers.append(new_sock)
 
-                elif sock in self.tcp_connected_peers:
+                elif sock in tcp_connected_peers:
                     received_message = sock.recv(RECV_SIZE).decode()
                     if received_message[:len("Block: ")] == "Block: ":
                         received_message = received_message[len("Block: "):]
                         print(f"tcp_client_received: Block")
-                        # print('######################################')
-                        # print(received_message)
-                        # print('######################################')
                         received_block = Block.deserialize(received_message)
-                        if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:
+                        if received_block.block_number not in [block.block_number for block in self.wallet.blockchain.chain]:  # if block number isn't alewady in chain
                             if sock not in missing_blocks_by_peer:
                                 missing_blocks_by_peer[sock] = []
                             missing_blocks_by_peer[sock].append(received_block)
@@ -450,6 +449,11 @@ class MainWindow(qtw.QMainWindow):
                             sock.send("finished".encode('utf-8'))
                             if finished_so_far >= NUMBER_OF_CONNECTED_CLIENTS:
                                 self.finished_collecting_missing_blocks = True
+                            else:
+                                finished_so_far += 1
+
+                    elif received_message == '':
+                        tcp_connected_peers.remove(sock)
 
                     else:
                         print(received_message)
@@ -457,14 +461,39 @@ class MainWindow(qtw.QMainWindow):
             if not self.finished_collecting_missing_blocks:
                 qtc.QTimer.singleShot(1000, collect_blocks_networking)
             else:
-                self.peer.close_server()  # TODO: implement
-                self.handle_collected_blocks()  # TODO: implement
+                tcp_connected_peers = []
+                self.peer.close_server()
+                self.handle_collected_blocks(list(missing_blocks_by_peer.values()))
                 self.finish_entering_wallet()
 
         collect_blocks_networking()
 
     def stop_waiting_for_blocks(self):
         self.finished_collecting_missing_blocks = True
+
+    def handle_collected_blocks(self, collected_blocks_lists_list):
+        valid_collected_blocks_lists_list = []
+        for collected_blocks_lists in collected_blocks_lists_list:
+            for collected_block in collected_blocks_lists:
+                if collected_block.is_valid():
+                    valid_collected_blocks_lists_list.append(collected_blocks_lists)
+
+        valid_collected_blocks_lists_list_tuples = []
+        for valid_collected_blocks_lists in valid_collected_blocks_lists_list:
+            valid_collected_blocks_list_tuples = []
+            for valid_collected_block in valid_collected_blocks_lists:
+                valid_collected_blocks_list_tuples.append((valid_collected_block.block_number, valid_collected_block.hash_block))
+            valid_collected_blocks_lists_list_tuples.append(valid_collected_blocks_list_tuples)
+
+        correct_valid_collected_blocks_list_tuples = most_frequent(valid_collected_blocks_lists_list_tuples)
+        index_of_correct_valid_collected_blocks_list = valid_collected_blocks_lists_list_tuples.index(correct_valid_collected_blocks_list_tuples)
+        correct_valid_collected_blocks_list = valid_collected_blocks_lists_list[index_of_correct_valid_collected_blocks_list]
+
+        for correct_valid_collected_block in correct_valid_collected_blocks_list:
+            self.wallet.add_proposed_block(correct_valid_collected_block)
+            if not self.wallet.add_a_block_to_chain(correct_valid_collected_block):
+                self.request_missing_blocks()
+
 
     # on events:
     def mousePressEvent(self, event):

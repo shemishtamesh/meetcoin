@@ -58,6 +58,14 @@ class Peer:
         self.tcp_server.listen(NUMBER_OF_CONNECTED_CLIENTS)
         self.udp_send("request_update_connection")
 
+    def close_server(self):
+        self.tcp_server.close()
+        self.tcp_server = None
+
+    def close_client(self):
+        self.tcp_client.close()
+        self.tcp_client = None
+
     # receiving
     def udp_receive_raw(self):
         return self.udp_receiver.recvfrom(RECV_SIZE)

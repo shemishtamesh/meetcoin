@@ -60,21 +60,15 @@ def json_file_to_xml_string(json_file):
 
     return et.fromstring(xml_string)[0]  # [0] because json2xml adds an unneeded wrapper
 
-
+# check what os is this:
 OS_NAME = platform.system()
 
-if OS_NAME == 'Linux':
-    import socket
 
-    # def get_ip_address():
-    #     temp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     temp_server.listen(1)
-    #
-    #     temp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     port = 49152
-    #     while True:
-    #         try:
-    #             temp_client.connect(("127.0.0.1", port))
-    #             return temp_server.accept()[0]
-    #         except OSError:
-    #             port += 1
+def most_frequent(List):
+    dict = {}
+    count, itm = 0, ''
+    for item in reversed(List):
+        dict[item] = dict.get(item, 0) + 1
+        if dict[item] >= count :
+            count, itm = dict[item], item
+    return(itm)
