@@ -27,6 +27,7 @@ class Transaction:
             try:
                 verifier.verify(hash_of_transaction, eval(self.signature))
             except ValueError:
+                print("signature")
                 return False
 
             # check if the receiver and sender are valid (if it's a point on the elliptic curve):
@@ -37,8 +38,10 @@ class Transaction:
                     x = int(receiver_key.pointQ.x)
                     y = int(receiver_key.pointQ.y)
                 except AttributeError:
+                    print("receiver's key is not a key")
                     return False
                 if ((y ** 2) - ((x ** 3) - (a * x) + b)) % p == 0:
+                    print("receiver's key is not on curve")
                     return False
 
             # is sender valid:
@@ -47,29 +50,35 @@ class Transaction:
                 x = int(sender_key.pointQ.x)
                 y = int(sender_key.pointQ.y)
             except AttributeError:
+                print("sender's key is not a key")
                 return False
             if ((y ** 2) - ((x ** 3) - (a * x) + b)) % p == 0:
-                return False
-
-            if self.receiver == STAKE_ADDRESS and self.amount <= 0:  # check if valid for stake transaction:
+                print("sender's key is not on curve")
                 return False
 
             # check if fee is valid:
             if float(self.fee) != TRANSACTION_FEE:
+                print("fee")
                 return False
 
-            # check if amount is more than 0:
-            if float(self.amount) <= 0:
+            # check if amount is more than 0, or different than zero in case of retrieving stake:
+            if (self.receiver != STAKE_ADDRESS and float(self.amount) <= 0) or (self.receiver == STAKE_ADDRESS and float(self.amount) == 0):
+                print("amount")
                 return False
 
             # check if the amount can be sent by sender:
             if blockchain.get_balance(self.sender) < (float(self.amount) + float(self.fee)):
+                print("amount can't be paid")
+                return False
+
+            if (self.receiver == STAKE_ADDRESS) and (self.amount < 0) and (blockchain.get_validators()[self.sender] < -self.amount):
                 return False
 
             # check if transaction is a duplicate of an existing transaction:
             for block in blockchain.chain:
                 for transaction in block.data:
                     if transaction == self:
+                        print("transaction already passed")
                         return False
 
         return True
@@ -150,8 +159,6 @@ class Block:
             try:
                 verifier.verify(hash_of_block_content, eval(self.signature))
             except ValueError:
-                import sys
-                sys.exit()
                 return False
 
             # check block number:
@@ -327,12 +334,18 @@ class Wallet:
     def add_transaction_to_pool(self, transaction):
         """adds a transaction to the transaction pool if it's valid"""
         if transaction.is_valid(self.blockchain):
+            print(f"amount = {transaction.amount}: this transaction is valid")
             self.transaction_pool.append(transaction)
             return True
+        print(f"amount = {transaction.amount}: this transaction is not valid")
         return False
 
     def make_transaction(self, receiver, amount):
         """gets a receiver (exported public key) and an amount (float), returns a transaction (Transaction)"""
+        if (receiver == STAKE_ADDRESS) and (amount < 0)\
+                and (self.blockchain.get_validators()[self.public_key.export_key(format=PUBLIC_KEY_FORMAT)] < -amount):
+            return False
+
         if self.get_balance() >= amount + TRANSACTION_FEE:
             sender = self.public_key.export_key(format=PUBLIC_KEY_FORMAT)
             fee = TRANSACTION_FEE
@@ -367,8 +380,9 @@ class Wallet:
     def add_a_block_to_chain(self):
         """adds a block from the proposed blocks to the blockchain iff the block is valid and its validator is the current leader, also empties the transaction pool and the proposed blocks list"""
         # if len(self.proposed_blocks) > 10:
+        current_leader = self.get_leader()
         for block in self.proposed_blocks:
-            if block.is_valid(self.blockchain) and block.validator == self.get_leader():
+            if block.is_valid(self.blockchain) and block.validator == current_leader:
                 self.blockchain.chain.append(block)
                 self.transaction_pool = []
                 self.proposed_blocks = []
@@ -382,7 +396,10 @@ class Wallet:
         block_hash_values = [int(block.hash_block().hexdigest(), 16) for block in self.proposed_blocks]
         validator_values = {}
         for block_hash_value, block in zip(block_hash_values, self.proposed_blocks):
-            validator_values[block.validator] = block_hash_value * sqrt(validators[block.validator])
+            if block.validator in validators:
+                validator_values[block.validator] = block_hash_value * sqrt(validators[block.validator])
+            else:
+                validator_values[block.validator] = 0
 
         if validator_values:
             leader = max(validator_values, key=(lambda key: validator_values[key]))

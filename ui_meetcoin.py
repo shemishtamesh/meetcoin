@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinKrkvhk.ui'
+## Form generated from reading UI file 'meetcoinMvxTzp.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -93,11 +93,6 @@ class Ui_MainWindow(object):
         self.blockchain_btn.setObjectName(u"blockchain_btn")
 
         self.verticalLayout_3.addWidget(self.blockchain_btn)
-
-        self.go_to_changing_wallet_btn = QPushButton(self.menu_frame)
-        self.go_to_changing_wallet_btn.setObjectName(u"go_to_changing_wallet_btn")
-
-        self.verticalLayout_3.addWidget(self.go_to_changing_wallet_btn)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
@@ -288,6 +283,16 @@ class Ui_MainWindow(object):
         self.current_balance_lbl.setObjectName(u"current_balance_lbl")
 
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.current_balance_lbl)
+
+        self.label_25 = QLabel(self.frame_3)
+        self.label_25.setObjectName(u"label_25")
+
+        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.label_25)
+
+        self.current_stake_lbl = QLabel(self.frame_3)
+        self.current_stake_lbl.setObjectName(u"current_stake_lbl")
+
+        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.current_stake_lbl)
 
 
         self.verticalLayout.addWidget(self.frame_3)
@@ -710,7 +715,6 @@ class Ui_MainWindow(object):
         self.exit_button.setText(QCoreApplication.translate("MainWindow", u"close", None))
         self.my_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.blockchain_btn.setText(QCoreApplication.translate("MainWindow", u"blockchain", None))
-        self.go_to_changing_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"change a wallet", None))
         self.help_btn.setText(QCoreApplication.translate("MainWindow", u"help", None))
         self.label_12.setText(QCoreApplication.translate("MainWindow", u"block number: ", None))
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"validator's name/validator's public key: ", None))
@@ -724,6 +728,8 @@ class Ui_MainWindow(object):
         self.public_key_lbl.setText(QCoreApplication.translate("MainWindow", u"public_key", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"your current balance: ", None))
         self.current_balance_lbl.setText(QCoreApplication.translate("MainWindow", u"current_balance", None))
+        self.label_25.setText(QCoreApplication.translate("MainWindow", u"your current stake: ", None))
+        self.current_stake_lbl.setText(QCoreApplication.translate("MainWindow", u"current_stake", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.my_wallet_tab), QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.label_8.setText(QCoreApplication.translate("MainWindow", u"new contacts name: ", None))
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"new contacts public key: ", None))
@@ -731,7 +737,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.add_contact_tab), QCoreApplication.translate("MainWindow", u"add contact", None))
         self.label_10.setText(QCoreApplication.translate("MainWindow", u"updated contacts name: ", None))
         self.label_11.setText(QCoreApplication.translate("MainWindow", u"updated contacts public key: ", None))
-        self.update_contact_btn.setText(QCoreApplication.translate("MainWindow", u"update_particle selected contact", None))
+        self.update_contact_btn.setText(QCoreApplication.translate("MainWindow", u"update selected contact", None))
         self.delete_contact_btn.setText(QCoreApplication.translate("MainWindow", u"delete selected contact", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.edit_delete_contact_tab), QCoreApplication.translate("MainWindow", u"edit\\delete contact", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"amount (not including validator fee): ", None))
@@ -741,12 +747,12 @@ class Ui_MainWindow(object):
         self.label_17.setText(QCoreApplication.translate("MainWindow", u"proposed blocks:", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"transaction pool: ", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.proposed_tab), QCoreApplication.translate("MainWindow", u"proposed blocks\\transaction pool", None))
-        self.change_password_btn.setText(QCoreApplication.translate("MainWindow", u"update_particle password", None))
+        self.change_password_btn.setText(QCoreApplication.translate("MainWindow", u"update password", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"old password: ", None))
         self.label_19.setText(QCoreApplication.translate("MainWindow", u"updated password: ", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"settings", None))
         self.label_28.setText(QCoreApplication.translate("MainWindow", u"contacts list:", None))
-        self.label_4.setText(QCoreApplication.translate("MainWindow", u"trying to collect blocks and to update_particle the local blockchain...", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"trying to collect blocks and to update the local blockchain...", None))
         self.stop_waiting_button.setText(QCoreApplication.translate("MainWindow", u"stop watiting", None))
         self.label_23.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
         self.enter_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"enter wallet", None))

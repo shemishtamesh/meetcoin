@@ -18,7 +18,7 @@ PUBLIC_KEY_FORMAT = 'PEM'#'OpenSSH'
 SECRET_KEY_FORMAT = 'PEM'
 SECRET_KEY_PROTECTION = 'PBKDF2WithHMAC-SHA1AndAES128-CBC'
 NUM_OF_TRANSACTIONS_IN_BLOCK = 1
-
+# TODO: make .ini file and try to read from it, if doesn't work use these values
 # for ICO:
 NUMBER_OF_COINS = 10.0  # must be over 2
 INITIAL_COIN_HOLDER = '''-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9zp6h9JFTqBbagWASuXhTVX/3mUQ\ndlRFkB112qFWgA2IimLJ5v9cIF+NwW086j+NDBYk1l5aoVnGtAnT4UjkTw==\n-----END PUBLIC KEY-----'''

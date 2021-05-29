@@ -22,7 +22,8 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
-# TODO: fix opening program multiple times, for some reason it says that the server socket is already in use.
+# TODO: make it possible for people to take money back from stake, and maybe make them loose some of it if the produce blocks that aren't valid
+# TODO: for some reason when I pass money to second peer and that peer pass it back, a coin is getting loss, probably from fee, also seems like there's a problem with validating and the staked coins
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -62,7 +63,6 @@ class MainWindow(qtw.QMainWindow):
         # setting up navigation buttons:
         self.ui.my_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.my_wallet_pg))  # navigation to my wallet page
         self.ui.blockchain_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.blockchain_pg))  # navigation to blockchain page
-        self.ui.go_to_changing_wallet_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.change_wallet_pg))  # navigation to change wallet page
         self.ui.help_btn.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.help_pg))  # navigation to help page
         self.ui.menu_frame.hide()  # hide until a wallet is created/recreated
 
@@ -165,11 +165,18 @@ class MainWindow(qtw.QMainWindow):
         self.ui.public_key_lbl.setText(self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT))
         self.create_blockchain_file()
         self.ui.current_balance_lbl.setText(str(self.wallet.get_balance()))
+        try:
+            self.ui.current_stake_lbl.setText(str(self.wallet.blockchain.get_validators()[self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT)]))
+        except KeyError:
+            self.ui.current_stake_lbl.setText('0')
+
         with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
             self.put_json_chain_on_tree(blockchain_file)
 
         if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
             self.is_validator = True
+        else:
+            self.is_validator = False
 
         self.handle_blocks()  # TODO: maybe use multithreading/processing for this, but probably because multithreading would probably not reduce time and multiprocessing wouldn't work because of memmory
         self.constant_receive()
@@ -191,6 +198,10 @@ class MainWindow(qtw.QMainWindow):
         with open(f"data{SLASH_SIGN}blockchain.json", "w") as blockchain_file:
             blockchain_file.write(self.wallet.blockchain.serialize())
         self.ui.current_balance_lbl.setText(str(self.wallet.get_balance()))
+        try:
+            self.ui.current_stake_lbl.setText(str(self.wallet.blockchain.get_validators()[self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT)]))
+        except KeyError:
+            self.ui.current_stake_lbl.setText('0')
 
     # trees:
     def add_transaction_to_pool_tree(self, json_transaction):
@@ -321,15 +332,16 @@ class MainWindow(qtw.QMainWindow):
 
     # block handling:
     def handle_blocks(self):
-        new_block = self.wallet.make_block()
-        if self.is_validator and new_block:
-            self.peer.udp_send(new_block)
-            self.ui.transaction_pool_tree.clear()
+        self.add_blocks_to_chain()
+        self.make_blocks()
 
+    def add_blocks_to_chain(self):
         if self.wallet.add_a_block_to_chain():
             # checking if validator now:
             if self.wallet.public_key.export_key(format=PUBLIC_KEY_FORMAT) in self.wallet.blockchain.get_validators():
                 self.is_validator = True
+            else:
+                self.is_validator = False
 
             # clearing trees:
             self.ui.transaction_pool_tree.clear()
@@ -340,7 +352,15 @@ class MainWindow(qtw.QMainWindow):
             with open(f"data{SLASH_SIGN}blockchain.json", "r") as blockchain_file:
                 self.put_json_chain_on_tree(blockchain_file)
 
-        qtc.QTimer.singleShot(10000, self.handle_blocks)
+        qtc.QTimer.singleShot(10000, self.add_blocks_to_chain)
+
+    def make_blocks(self):
+        new_block = self.wallet.make_block()
+        if self.is_validator and new_block:
+            self.peer.udp_send(new_block)
+            self.ui.transaction_pool_tree.clear()
+
+        qtc.QTimer.singleShot(5000, self.make_blocks)
 
     # networking:
     def send_transaction(self):
@@ -365,15 +385,16 @@ class MainWindow(qtw.QMainWindow):
             except ValueError:
                 qtw.QMessageBox.critical(None, 'Fail', "amount must be a number.")
                 return
-            if amount > 0:
+
+            if (amount > 0) or (receiver == STAKE_ADDRESS and amount != 0):
                 transaction = self.wallet.make_transaction(receiver, amount)
                 if transaction:
                     self.peer.udp_send(transaction)
                     qtw.QMessageBox.information(None, 'Success', "successfully sent the transaction.")
                 else:
-                    qtw.QMessageBox.critical(None, 'Fail', "you don't have enough meetcoins to complete this transaction.")
+                    qtw.QMessageBox.critical(None, 'Fail', "you don't have enough coins to complete this transaction.")
             else:
-                qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero.")
+                qtw.QMessageBox.critical(None, 'Fail', "amount must be more than zero when not retrieving coins from stake, or different to zero when retrieving or staking coins.")
 
     def constant_receive(self):
         if self.peer.tcp_client:
@@ -400,8 +421,8 @@ class MainWindow(qtw.QMainWindow):
 
     def received_from_udp_socket(self, message):
         if type(message) == Transaction:
-            self.wallet.add_transaction_to_pool(message)
-            self.add_transaction_to_pool_tree(message)
+            if self.wallet.add_transaction_to_pool(message):
+                self.add_transaction_to_pool_tree(message)
         elif type(message) == Block:
             self.wallet.add_proposed_block(message)
             self.add_block_to_proposed_tree(message)
