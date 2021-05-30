@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinMvxTzp.ui'
+## Form generated from reading UI file 'meetcoinuwKAnU.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -115,95 +115,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSpacing(0)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.tabWidget_2 = QTabWidget(self.blockchain_pg)
-        self.tabWidget_2.setObjectName(u"tabWidget_2")
-        self.tabWidget_2.setStyleSheet(u"QTabWidget::pane { border: 0; }")
-        self.tabWidget_2.setTabShape(QTabWidget.Triangular)
-        self.search_block_tab = QWidget()
-        self.search_block_tab.setObjectName(u"search_block_tab")
-        self.verticalLayout_5 = QVBoxLayout(self.search_block_tab)
-        self.verticalLayout_5.setSpacing(0)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
-        self.frame_7 = QFrame(self.search_block_tab)
-        self.frame_7.setObjectName(u"frame_7")
-        self.frame_7.setFrameShape(QFrame.StyledPanel)
-        self.frame_7.setFrameShadow(QFrame.Raised)
-        self.formLayout_5 = QFormLayout(self.frame_7)
-        self.formLayout_5.setObjectName(u"formLayout_5")
-        self.label_12 = QLabel(self.frame_7)
-        self.label_12.setObjectName(u"label_12")
-
-        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.label_12)
-
-        self.block_number_searchbar = QLineEdit(self.frame_7)
-        self.block_number_searchbar.setObjectName(u"block_number_searchbar")
-
-        self.formLayout_5.setWidget(0, QFormLayout.FieldRole, self.block_number_searchbar)
-
-        self.label_13 = QLabel(self.frame_7)
-        self.label_13.setObjectName(u"label_13")
-
-        self.formLayout_5.setWidget(1, QFormLayout.LabelRole, self.label_13)
-
-        self.validator_searchbar = QLineEdit(self.frame_7)
-        self.validator_searchbar.setObjectName(u"validator_searchbar")
-
-        self.formLayout_5.setWidget(1, QFormLayout.FieldRole, self.validator_searchbar)
-
-
-        self.verticalLayout_5.addWidget(self.frame_7)
-
-        self.tabWidget_2.addTab(self.search_block_tab, "")
-        self.search_transaction_tab = QWidget()
-        self.search_transaction_tab.setObjectName(u"search_transaction_tab")
-        self.verticalLayout_10 = QVBoxLayout(self.search_transaction_tab)
-        self.verticalLayout_10.setSpacing(0)
-        self.verticalLayout_10.setObjectName(u"verticalLayout_10")
-        self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
-        self.frame_8 = QFrame(self.search_transaction_tab)
-        self.frame_8.setObjectName(u"frame_8")
-        self.frame_8.setFrameShape(QFrame.StyledPanel)
-        self.frame_8.setFrameShadow(QFrame.Raised)
-        self.formLayout_6 = QFormLayout(self.frame_8)
-        self.formLayout_6.setObjectName(u"formLayout_6")
-        self.label_14 = QLabel(self.frame_8)
-        self.label_14.setObjectName(u"label_14")
-
-        self.formLayout_6.setWidget(0, QFormLayout.LabelRole, self.label_14)
-
-        self.sender_searchbar = QLineEdit(self.frame_8)
-        self.sender_searchbar.setObjectName(u"sender_searchbar")
-
-        self.formLayout_6.setWidget(0, QFormLayout.FieldRole, self.sender_searchbar)
-
-        self.label_15 = QLabel(self.frame_8)
-        self.label_15.setObjectName(u"label_15")
-
-        self.formLayout_6.setWidget(1, QFormLayout.LabelRole, self.label_15)
-
-        self.receiver_searchbar = QLineEdit(self.frame_8)
-        self.receiver_searchbar.setObjectName(u"receiver_searchbar")
-
-        self.formLayout_6.setWidget(1, QFormLayout.FieldRole, self.receiver_searchbar)
-
-        self.label_16 = QLabel(self.frame_8)
-        self.label_16.setObjectName(u"label_16")
-
-        self.formLayout_6.setWidget(2, QFormLayout.LabelRole, self.label_16)
-
-        self.amount_searchbar = QLineEdit(self.frame_8)
-        self.amount_searchbar.setObjectName(u"amount_searchbar")
-
-        self.formLayout_6.setWidget(2, QFormLayout.FieldRole, self.amount_searchbar)
-
-
-        self.verticalLayout_10.addWidget(self.frame_8)
-
-        self.tabWidget_2.addTab(self.search_transaction_tab, "")
-
-        self.verticalLayout_4.addWidget(self.tabWidget_2)
-
         self.blockchain_tree = QTreeWidget(self.blockchain_pg)
         __qtreewidgetitem = QTreeWidgetItem()
         __qtreewidgetitem.setText(0, u"1");
@@ -699,7 +610,6 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
 
         self.stackedWidget.setCurrentIndex(4)
-        self.tabWidget_2.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget_3.setCurrentIndex(0)
 
@@ -716,13 +626,6 @@ class Ui_MainWindow(object):
         self.my_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.blockchain_btn.setText(QCoreApplication.translate("MainWindow", u"blockchain", None))
         self.help_btn.setText(QCoreApplication.translate("MainWindow", u"help", None))
-        self.label_12.setText(QCoreApplication.translate("MainWindow", u"block number: ", None))
-        self.label_13.setText(QCoreApplication.translate("MainWindow", u"validator's name/validator's public key: ", None))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.search_block_tab), QCoreApplication.translate("MainWindow", u"search block", None))
-        self.label_14.setText(QCoreApplication.translate("MainWindow", u"sender's name/sender's public key: ", None))
-        self.label_15.setText(QCoreApplication.translate("MainWindow", u"receiver's name/ receiver's public key: ", None))
-        self.label_16.setText(QCoreApplication.translate("MainWindow", u"amount: ", None))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.search_transaction_tab), QCoreApplication.translate("MainWindow", u"search transaction", None))
         self.label_20.setText(QCoreApplication.translate("MainWindow", u"for help, ask me.", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"your public key: ", None))
         self.public_key_lbl.setText(QCoreApplication.translate("MainWindow", u"public_key", None))

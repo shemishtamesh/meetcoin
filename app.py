@@ -22,8 +22,6 @@ if OS_NAME == 'Linux':
 elif OS_NAME == 'Windows':
     SLASH_SIGN = '\\'
 
-# TODO: make it possible for people to take money back from stake, and maybe make them loose some of it if the produce blocks that aren't valid
-# TODO: for some reason when I pass money to second peer and that peer pass it back, a coin is getting loss, probably from fee, also seems like there's a problem with validating and the staked coins
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self, *args, **kwargs):
