@@ -31,6 +31,7 @@ class Peer:
 
     # sending:
     def udp_send_raw(self, message):
+        """broadcasts a udp message"""
         self.udp_sender.sendto(message.encode('utf-8'), ('255.255.255.255', UDP_PORT))
 
     def udp_send(self, to_send):

@@ -221,14 +221,15 @@ class Blockchain:
         block = Block(block_number, prev_hash, data, validator, signature)
         return block
 
-    def replace_chain_if_more_reliable(self, new_chain):
-        # TODO: update_particle this to something secure, longer isn't necessarily more secure in pos, probably get more than one chain compare them and choose the best
-        """replaces the chain if the new chain is longer and valid"""
-        if len(new_chain) > len(self.chain) and \
-                self.is_chain_valid(new_chain):
-            self.chain = new_chain
-            return True
-        return False
+    # TODO: maybe delete this
+    # def replace_chain_if_more_reliable(self, new_chain):
+    #     # to do: update_particle this to something secure, longer isn't necessarily more secure in pos, probably get more than one chain compare them and choose the best
+    #     """replaces the chain if the new chain is longer and valid"""
+    #     if len(new_chain) > len(self.chain) and \
+    #             self.is_chain_valid(new_chain):
+    #         self.chain = new_chain
+    #         return True
+    #     return False
 
     def is_valid(self):
         """checks if the chain is valid and returns the result"""
@@ -309,6 +310,7 @@ class Wallet:
             self.secret_key = secret_key
 
         self.public_key = self.secret_key.public_key()
+        print(type(self.public_key))
 
         if not blockchain:
             self.blockchain = Blockchain()
@@ -359,8 +361,6 @@ class Wallet:
             new_block.signature = signature
             self.transaction_pool = []
             return new_block
-
-        return None
 
     def add_proposed_block(self, block):
         """adds a block the the proposed blocks list"""
