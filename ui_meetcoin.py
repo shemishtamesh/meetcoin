@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoinuwKAnU.ui'
+## Form generated from reading UI file 'meetcoineOeqFe.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -325,6 +325,7 @@ class Ui_MainWindow(object):
 
         self.transaction_password_in = QLineEdit(self.frame_4)
         self.transaction_password_in.setObjectName(u"transaction_password_in")
+        self.transaction_password_in.setEchoMode(QLineEdit.Password)
 
         self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.transaction_password_in)
 
@@ -382,32 +383,61 @@ class Ui_MainWindow(object):
         self.frame_2.setObjectName(u"frame_2")
         self.frame_2.setFrameShape(QFrame.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Raised)
-        self.formLayout_7 = QFormLayout(self.frame_2)
-        self.formLayout_7.setObjectName(u"formLayout_7")
-        self.change_password_btn = QPushButton(self.frame_2)
-        self.change_password_btn.setObjectName(u"change_password_btn")
+        self.gridLayout_6 = QGridLayout(self.frame_2)
+        self.gridLayout_6.setObjectName(u"gridLayout_6")
+        self.new_password_in = QLineEdit(self.frame_2)
+        self.new_password_in.setObjectName(u"new_password_in")
+        self.new_password_in.setEchoMode(QLineEdit.Password)
 
-        self.formLayout_7.setWidget(2, QFormLayout.LabelRole, self.change_password_btn)
-
-        self.label_6 = QLabel(self.frame_2)
-        self.label_6.setObjectName(u"label_6")
-
-        self.formLayout_7.setWidget(0, QFormLayout.LabelRole, self.label_6)
-
-        self.old_password_in = QLineEdit(self.frame_2)
-        self.old_password_in.setObjectName(u"old_password_in")
-
-        self.formLayout_7.setWidget(0, QFormLayout.FieldRole, self.old_password_in)
+        self.gridLayout_6.addWidget(self.new_password_in, 1, 1, 1, 3)
 
         self.label_19 = QLabel(self.frame_2)
         self.label_19.setObjectName(u"label_19")
 
-        self.formLayout_7.setWidget(1, QFormLayout.LabelRole, self.label_19)
+        self.gridLayout_6.addWidget(self.label_19, 1, 0, 1, 1)
 
-        self.new_password_in = QLineEdit(self.frame_2)
-        self.new_password_in.setObjectName(u"new_password_in")
+        self.change_password_btn = QPushButton(self.frame_2)
+        self.change_password_btn.setObjectName(u"change_password_btn")
 
-        self.formLayout_7.setWidget(1, QFormLayout.FieldRole, self.new_password_in)
+        self.gridLayout_6.addWidget(self.change_password_btn, 3, 0, 1, 1)
+
+        self.label_16 = QLabel(self.frame_2)
+        self.label_16.setObjectName(u"label_16")
+
+        self.gridLayout_6.addWidget(self.label_16, 2, 0, 1, 1)
+
+        self.label_6 = QLabel(self.frame_2)
+        self.label_6.setObjectName(u"label_6")
+
+        self.gridLayout_6.addWidget(self.label_6, 0, 0, 1, 1)
+
+        self.confirm_updated_password_in = QLineEdit(self.frame_2)
+        self.confirm_updated_password_in.setObjectName(u"confirm_updated_password_in")
+        self.confirm_updated_password_in.setEchoMode(QLineEdit.Password)
+
+        self.gridLayout_6.addWidget(self.confirm_updated_password_in, 2, 1, 1, 3)
+
+        self.label_32 = QLabel(self.frame_2)
+        self.label_32.setObjectName(u"label_32")
+
+        self.gridLayout_6.addWidget(self.label_32, 5, 2, 1, 1)
+
+        self.old_password_in = QLineEdit(self.frame_2)
+        self.old_password_in.setObjectName(u"old_password_in")
+        self.old_password_in.setEchoMode(QLineEdit.Password)
+
+        self.gridLayout_6.addWidget(self.old_password_in, 0, 1, 1, 3)
+
+        self.label_13 = QLabel(self.frame_2)
+        self.label_13.setObjectName(u"label_13")
+
+        self.gridLayout_6.addWidget(self.label_13, 5, 0, 4, 1)
+
+        self.protected_private_key_lbl = QLabel(self.frame_2)
+        self.protected_private_key_lbl.setObjectName(u"protected_private_key_lbl")
+        self.protected_private_key_lbl.setTextInteractionFlags(Qt.LinksAccessibleByMouse|Qt.TextSelectableByMouse)
+
+        self.gridLayout_6.addWidget(self.protected_private_key_lbl, 6, 2, 3, 2)
 
 
         self.verticalLayout_11.addWidget(self.frame_2)
@@ -422,6 +452,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_6.addWidget(self.label_28)
 
         self.contacts_list = QListWidget(self.my_wallet_pg)
+        QListWidgetItem(self.contacts_list)
         self.contacts_list.setObjectName(u"contacts_list")
         self.contacts_list.setFrameShape(QFrame.NoFrame)
 
@@ -488,6 +519,7 @@ class Ui_MainWindow(object):
 
         self.already_have_wallet_password_in = QLineEdit(self.frame_12)
         self.already_have_wallet_password_in.setObjectName(u"already_have_wallet_password_in")
+        self.already_have_wallet_password_in.setEchoMode(QLineEdit.Password)
 
         self.formLayout_11.setWidget(0, QFormLayout.FieldRole, self.already_have_wallet_password_in)
 
@@ -522,30 +554,50 @@ class Ui_MainWindow(object):
         self.frame_9.setStyleSheet(u"QTabWidget::pane { border: 0; }")
         self.frame_9.setFrameShape(QFrame.StyledPanel)
         self.frame_9.setFrameShadow(QFrame.Raised)
-        self.formLayout_8 = QFormLayout(self.frame_9)
-        self.formLayout_8.setObjectName(u"formLayout_8")
-        self.formLayout_8.setHorizontalSpacing(0)
-        self.formLayout_8.setVerticalSpacing(0)
-        self.formLayout_8.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout_5 = QGridLayout(self.frame_9)
+        self.gridLayout_5.setSpacing(0)
+        self.gridLayout_5.setObjectName(u"gridLayout_5")
+        self.gridLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.create_wallet_btn = QPushButton(self.frame_9)
+        self.create_wallet_btn.setObjectName(u"create_wallet_btn")
+
+        self.gridLayout_5.addWidget(self.create_wallet_btn, 2, 0, 1, 1)
+
         self.label_24 = QLabel(self.frame_9)
         self.label_24.setObjectName(u"label_24")
 
-        self.formLayout_8.setWidget(1, QFormLayout.LabelRole, self.label_24)
+        self.gridLayout_5.addWidget(self.label_24, 0, 0, 1, 1)
+
+        self.label_12 = QLabel(self.frame_9)
+        self.label_12.setObjectName(u"label_12")
+
+        self.gridLayout_5.addWidget(self.label_12, 3, 0, 1, 2)
+
+        self.verticalSpacer_2 = QSpacerItem(20, 16777215, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.gridLayout_5.addItem(self.verticalSpacer_2, 4, 0, 1, 1)
+
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout_5.addItem(self.horizontalSpacer_2, 3, 2, 1, 1)
 
         self.choosing_password_in = QLineEdit(self.frame_9)
         self.choosing_password_in.setObjectName(u"choosing_password_in")
         self.choosing_password_in.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.choosing_password_in.setEchoMode(QLineEdit.Password)
 
-        self.formLayout_8.setWidget(1, QFormLayout.FieldRole, self.choosing_password_in)
+        self.gridLayout_5.addWidget(self.choosing_password_in, 0, 1, 1, 2)
 
-        self.create_wallet_btn = QPushButton(self.frame_9)
-        self.create_wallet_btn.setObjectName(u"create_wallet_btn")
+        self.label_15 = QLabel(self.frame_9)
+        self.label_15.setObjectName(u"label_15")
 
-        self.formLayout_8.setWidget(2, QFormLayout.LabelRole, self.create_wallet_btn)
+        self.gridLayout_5.addWidget(self.label_15, 1, 0, 1, 1)
 
-        self.verticalSpacer_2 = QSpacerItem(20, 16777215, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.confirm_new_password_in = QLineEdit(self.frame_9)
+        self.confirm_new_password_in.setObjectName(u"confirm_new_password_in")
+        self.confirm_new_password_in.setEchoMode(QLineEdit.Password)
 
-        self.formLayout_8.setItem(4, QFormLayout.LabelRole, self.verticalSpacer_2)
+        self.gridLayout_5.addWidget(self.confirm_new_password_in, 1, 1, 1, 2)
 
 
         self.verticalLayout_14.addWidget(self.frame_9)
@@ -573,6 +625,7 @@ class Ui_MainWindow(object):
 
         self.recreate_wallet_password = QLineEdit(self.frame_10)
         self.recreate_wallet_password.setObjectName(u"recreate_wallet_password")
+        self.recreate_wallet_password.setEchoMode(QLineEdit.Password)
 
         self.formLayout_10.setWidget(0, QFormLayout.FieldRole, self.recreate_wallet_password)
 
@@ -650,18 +703,41 @@ class Ui_MainWindow(object):
         self.label_17.setText(QCoreApplication.translate("MainWindow", u"proposed blocks:", None))
         self.label_18.setText(QCoreApplication.translate("MainWindow", u"transaction pool: ", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.proposed_tab), QCoreApplication.translate("MainWindow", u"proposed blocks\\transaction pool", None))
-        self.change_password_btn.setText(QCoreApplication.translate("MainWindow", u"update password", None))
-        self.label_6.setText(QCoreApplication.translate("MainWindow", u"old password: ", None))
         self.label_19.setText(QCoreApplication.translate("MainWindow", u"updated password: ", None))
+        self.change_password_btn.setText(QCoreApplication.translate("MainWindow", u"update password", None))
+        self.label_16.setText(QCoreApplication.translate("MainWindow", u"confirm password: ", None))
+        self.label_6.setText(QCoreApplication.translate("MainWindow", u"old password: ", None))
+        self.label_32.setText(QCoreApplication.translate("MainWindow", u"your protected private key:", None))
+        self.label_13.setText(QCoreApplication.translate("MainWindow", u"passwords must contain:\n"
+"        8 characters length or more\n"
+"        1 digit or more\n"
+"        1 symbol or more\n"
+"        1 uppercase letter or more\n"
+"        1 lowercase letter or more", None))
+        self.protected_private_key_lbl.setText(QCoreApplication.translate("MainWindow", u"protected_private_key", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"settings", None))
         self.label_28.setText(QCoreApplication.translate("MainWindow", u"contacts list:", None))
+
+        __sortingEnabled = self.contacts_list.isSortingEnabled()
+        self.contacts_list.setSortingEnabled(False)
+        ___qlistwidgetitem = self.contacts_list.item(0)
+        ___qlistwidgetitem.setText(QCoreApplication.translate("MainWindow", u"stake: STAKE_ADDRESS", None));
+        self.contacts_list.setSortingEnabled(__sortingEnabled)
+
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"trying to collect blocks and to update the local blockchain...", None))
         self.stop_waiting_button.setText(QCoreApplication.translate("MainWindow", u"stop watiting", None))
         self.label_23.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
         self.enter_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"enter wallet", None))
         self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.already_have_wallet_tab), QCoreApplication.translate("MainWindow", u"already have a wallet on this device", None))
-        self.label_24.setText(QCoreApplication.translate("MainWindow", u"new password: ", None))
         self.create_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"create wallet", None))
+        self.label_24.setText(QCoreApplication.translate("MainWindow", u"new password: ", None))
+        self.label_12.setText(QCoreApplication.translate("MainWindow", u"passwords must contain:\n"
+"        8 characters length or more\n"
+"        1 digit or more\n"
+"        1 symbol or more\n"
+"        1 uppercase letter or more\n"
+"        1 lowercase letter or more", None))
+        self.label_15.setText(QCoreApplication.translate("MainWindow", u"confirm password: ", None))
         self.tabWidget_3.setTabText(self.tabWidget_3.indexOf(self.new_wallet_tab), QCoreApplication.translate("MainWindow", u"new wallet", None))
         self.label_21.setText(QCoreApplication.translate("MainWindow", u"password: ", None))
         self.label_22.setText(QCoreApplication.translate("MainWindow", u"secret key (protected by the provided password): ", None))

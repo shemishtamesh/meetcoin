@@ -16,6 +16,7 @@ elif OS_NAME == "Windows":
 
 
 class Peer:
+    """used to handle networking, both udp and tcp"""
     def __init__(self):
         # udp sockets:
         self.udp_sender = socket(AF_INET, SOCK_DGRAM)
@@ -35,6 +36,7 @@ class Peer:
         self.udp_sender.sendto(message.encode('utf-8'), ('255.255.255.255', UDP_PORT))
 
     def udp_send(self, to_send):
+        """formats and broadcasts a udp message"""
         if type(to_send) == Transaction:
             self.udp_send_raw("transaction:" + to_send.serialize())
         elif type(to_send) == Block:
@@ -43,12 +45,14 @@ class Peer:
             self.udp_send_raw(to_send)
 
     def tcp_client_send(self, to_send):
+        """sends a tcp message to a server (a new peer that's asking for missing blocks)"""
         if type(to_send) == Block:
             self.tcp_client.send(("Block: " + to_send.serialize()).encode('utf-8'))
         else:
             self.tcp_client.send(to_send.encode('utf-8'))
 
     def request_update_connection(self):
+        """opens the tcp_server socket, broadcasts a request for connection"""
         self.tcp_server = socket(AF_INET, SOCK_STREAM)
         if OS_NAME == 'Linux':
             self.tcp_server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -57,20 +61,24 @@ class Peer:
         self.udp_send("request_update_connection")
 
     def close_server(self):
+        """closes and deletes the tcp_server socket"""
         if self.tcp_server:
             self.tcp_server.close()
             self.tcp_server = None
 
     def close_client(self):
+        """closes and deletes the tcp_client socket"""
         if self.tcp_client:
             self.tcp_client.close()
             self.tcp_client = None
 
     # receiving
     def udp_receive_raw(self):
+        """receives a message from the udp_receiver port and returns it"""
         return self.udp_receiver.recvfrom(RECV_SIZE)
 
     def udp_receive(self):
+        """receives a udp message, interprets it, and returns the relevant information, also tcp connects if necessary"""
         (received_message, sender_address) = self.udp_receive_raw()
         received_message = received_message.decode('utf-8')
         if received_message[:len("transaction:")] == "transaction:":
@@ -90,4 +98,4 @@ class Peer:
 
 
 if __name__ == "__main__":
-    Peer()
+    pass

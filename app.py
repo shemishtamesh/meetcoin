@@ -24,6 +24,7 @@ elif OS_NAME == 'Windows':
 
 
 class MainWindow(qtw.QMainWindow):
+    """this is the main class, it takes the the major elements of the program (logic for meetcoin, networking, and gui) and combines them"""
     def __init__(self, *args, **kwargs):
         # creating the window:
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -124,18 +125,43 @@ class MainWindow(qtw.QMainWindow):
     # wallet creation and entering:
     def create_wallet(self):
         """creating wallet with password that was provided by the user, and assigning it to self.wallet, also calls request_missing_blocks"""
-        self.wallet = Wallet()
-        password = self.ui.choosing_password_in.text()
-        with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
-            if password:
-                secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
-                                                                        passphrase=password,
-                                                                        protection=SECRET_KEY_PROTECTION))
-            else:
-                secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
-                                                                        protection=SECRET_KEY_PROTECTION))
+        warning_window = qtw.QMessageBox
+        answer = warning_window.warning(None, 'Warning', "creating a new wallet will delete the wallet that is already on this device from it, are you sure you want to creat a new wallet?", warning_window.Yes | warning_window.No)
+        if answer == warning_window.Yes:
+            self.wallet = Wallet()
+            password = self.ui.choosing_password_in.text()
+            if password != self.ui.confirm_new_password_in.text():
+                qtw.QMessageBox.critical(None, 'Fail', "the two passwords provided aren't the same.")
+                return
+            password_error_dict = password_check(password)
+            if not password_error_dict["password_ok"]:
+                error_message = ""
+                if password_error_dict["length_error"]:
+                    error_message += "password must contain at least 8 characters."
+                if password_error_dict["digit_error"]:
+                    error_message += f"\npassword must contain at least 1 digit."
+                if password_error_dict["uppercase_error"]:
+                    error_message += f"\npassword must contain at least 1 uppercase letter."
+                if password_error_dict["lowercase_error"]:
+                    error_message += f"\npassword must contain at least 1 lower letter."
+                if password_error_dict["symbol_error"]:
+                    error_message += f"\npassword must contain at least 1 lower symbol (for example: !, @, #, $, %, ^, &, *, etc.)."
 
-        self.request_missing_blocks()
+                qtw.QMessageBox.critical(None, 'Fail', error_message)
+
+            else:
+                with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
+                    if password:
+                        secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
+                                                                                passphrase=password,
+                                                                                protection=SECRET_KEY_PROTECTION))
+                    else:
+                        secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
+                                                                                protection=SECRET_KEY_PROTECTION))
+
+                self.request_missing_blocks()
+        else:
+            warning_window.information(None, '', "new wallet was not created.")
 
     def enter_wallet(self):
         """calls request_missing_blocks if password is correct"""
@@ -152,15 +178,20 @@ class MainWindow(qtw.QMainWindow):
 
     def recreate_wallet(self):
         """gets protected private key from user, a  password, and if they match, calls request_missing_blocks"""
-        password = self.ui.recreate_wallet_password.text()
-        protected_secret_key = self.ui.recreate_wallet_private_key.text()
-        try:
-            self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
-            with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
-                secret_key_file.write(protected_secret_key)
-            self.request_missing_blocks()
-        except ValueError:
-            qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+        warning_window = qtw.QMessageBox
+        answer = warning_window.warning(None, 'Warning', "creating a new wallet will delete the wallet that is already on this device from it, are you sure you want to creat a new wallet?", warning_window.Yes | warning_window.No)
+        if answer == warning_window.Yes:
+            password = self.ui.recreate_wallet_password.text()
+            protected_secret_key = self.ui.recreate_wallet_private_key.text()
+            try:
+                self.wallet = Wallet(ECC.import_key(protected_secret_key, passphrase=password))
+                with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
+                    secret_key_file.write(protected_secret_key)
+                self.request_missing_blocks()
+            except ValueError:
+                qtw.QMessageBox.critical(None, 'Fail', "password doesn't match the protected private key that was provided.")
+        else:
+            warning_window.information(None, '', "a wallet was not recreated.")
 
     def finish_entering_wallet(self):
         """shows the menu_frame, and setting up the gui with all information from the wallet"""
@@ -182,7 +213,10 @@ class MainWindow(qtw.QMainWindow):
         else:
             self.is_validator = False
 
-        self.handle_blocks()  # TODO: maybe use multithreading/processing for this, but probably because multithreading would probably not reduce time and multiprocessing wouldn't work because of memmory
+        with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
+            self.ui.protected_private_key_lbl.setText(secret_key_file.read())
+
+        self.handle_blocks()
         self.constant_receive()
 
     # blockchain file:
@@ -253,10 +287,9 @@ class MainWindow(qtw.QMainWindow):
     def add_contact(self, name=None, public_key=None):
         """gets name (default None) and a public key (default None) and adds the pair to the contacts.json file and to the contacts list on gui"""
         if not name:
-            name = self.ui.updated_contacts_name_in.text()
+            name = self.ui.new_contacts_name_in.text()
         if not public_key:
-            print("in not public_key")
-            public_key = self.ui.updated_contacts_public_key_in.text()
+            public_key = self.ui.new_contacts_public_key_in.text()
             if public_key != STAKE_ADDRESS:
                 try:
                     ECC.import_key(public_key)
@@ -279,14 +312,11 @@ class MainWindow(qtw.QMainWindow):
     def update_contact(self):
         """updates a contact by replacing its name and public key by ones provided by user"""
         selected_contacts = self.ui.contacts_list.selectedItems()
-        print(type(selected_contacts))
         if selected_contacts:
 
             # check if public key is valid
             public_key = self.ui.updated_contacts_public_key_in.text()
-            print(f"public_key \'{public_key}\'")
             if public_key != STAKE_ADDRESS:
-                print("public_key not stake")
                 try:
                     ECC.import_key(public_key)
                 except (ValueError, IndexError):
@@ -327,18 +357,41 @@ class MainWindow(qtw.QMainWindow):
         try:
             with open(f"data{SLASH_SIGN}private key.txt", 'r') as secret_key_file:
                 protected_secret_key = secret_key_file.read()
+                if not protected_secret_key:
+                    qtw.QMessageBox.critical(None, 'Fail', "there is no wallet on this device.")
+                    return
                 ECC.import_key(protected_secret_key, passphrase=old_password)
         except ValueError:
             qtw.QMessageBox.critical(None, 'Fail', "old password doesn't match the protected private key that was provided.")
             return
 
         new_password = self.ui.new_password_in.text()
-        with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
-            secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
-                                                                    passphrase=new_password,
-                                                                    protection=SECRET_KEY_PROTECTION))
+        if new_password != self.ui.confirm_updated_password_in.text():
+            qtw.QMessageBox.critical(None, 'Fail', "the two passwords provided aren't the same.")
+            return
 
-        qtw.QMessageBox.information(None, 'Success', "successfully changed the password.")
+        password_error_dict = password_check(new_password)
+        if not password_error_dict["password_ok"]:
+            error_message = ""
+            if password_error_dict["length_error"]:
+                error_message += "password must contain at least 8 characters."
+            if password_error_dict["digit_error"]:
+                error_message += f"\npassword must contain at least 1 digit."
+            if password_error_dict["uppercase_error"]:
+                error_message += f"\npassword must contain at least 1 uppercase letter."
+            if password_error_dict["lowercase_error"]:
+                error_message += f"\npassword must contain at least 1 lower letter."
+            if password_error_dict["symbol_error"]:
+                error_message += f"\npassword must contain at least 1 lower symbol (for example: !, @, #, $, %, ^, &, *, etc.)."
+
+            qtw.QMessageBox.critical(None, 'Fail', error_message)
+        else:
+            with open(f"data{SLASH_SIGN}private key.txt", 'w') as secret_key_file:
+                secret_key_file.write(self.wallet.secret_key.export_key(format=SECRET_KEY_FORMAT,
+                                                                        passphrase=new_password,
+                                                                        protection=SECRET_KEY_PROTECTION))
+
+            qtw.QMessageBox.information(None, 'Success', "successfully changed the password.")
 
     # block handling:
     def handle_blocks(self):
@@ -556,7 +609,6 @@ class MainWindow(qtw.QMainWindow):
         self.last_click_on_empty_space = event.globalPos()
 
     def resizeEvent(self, event):
-        print(event)
         qtw.QMainWindow.resizeEvent(self, event)
         rect = self.rect()
         # top left grip doesn't need to be moved

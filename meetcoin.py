@@ -6,6 +6,7 @@ from math import sqrt  # for choosing leader
 
 
 class Transaction:
+    """represents a transaction (used for all transactions), the default is the initial transaction"""
     def __init__(self,
                  receiver=INITIAL_COIN_HOLDER,
                  sender="",
@@ -20,7 +21,7 @@ class Transaction:
 
     def is_valid(self, blockchain):
         """returns true iff the transaction is valid"""
-        if not (self == Transaction() and self in blockchain.chain[0].data):  # unless initial transaction for initial coin offering
+        if not (self.serialize() == Transaction().serialize() and self in blockchain.chain[0].data):  # unless initial transaction for initial coin offering
             # check signature against sender and rest of transaction:
             hash_of_transaction = self.hash_transaction()
             verifier = DSS.new(ECC.import_key(self.sender), STANDARD_FOR_SIGNATURES)
@@ -104,6 +105,7 @@ class Transaction:
 
 
 class Block:
+    """represents a block and used to store transaction and to separate them, the default block is the genesis block"""
     def __init__(self,
                  number=0,
                  prev_hash="",
@@ -200,6 +202,7 @@ class Block:
 
 
 class Blockchain:
+    """represents a blockchain, used to store blocks and to derive information from them"""
     def __init__(self, chain=None):
         if not chain:
             self.chain = [Block()]
@@ -252,12 +255,13 @@ class Blockchain:
     def get_balance(self, public_key):
         """gets a public_key and returns the balance associated with it"""
         ret_value = 0
+        formatted_public_key = public_key.replace('\n', '\\n')
         for block in self.chain:
             for transaction in block.data:
                 if block.validator == public_key:
                     ret_value += transaction.fee
 
-                if transaction.receiver == public_key:
+                if transaction.receiver == formatted_public_key:
                     ret_value += transaction.amount
 
                 if transaction.sender == public_key:
@@ -303,6 +307,7 @@ class Blockchain:
 
 
 class Wallet:
+    """used to store a blockchain, and to interact with it"""
     def __init__(self, secret_key=None, blockchain=None):
         if not secret_key:  # secret key = private key
             self.secret_key = ECC.generate(curve=CURVE_FOR_KEYS)
@@ -310,7 +315,6 @@ class Wallet:
             self.secret_key = secret_key
 
         self.public_key = self.secret_key.public_key()
-        print(type(self.public_key))
 
         if not blockchain:
             self.blockchain = Blockchain()
