@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'meetcoineOeqFe.ui'
+## Form generated from reading UI file 'meetcoincGIHiz.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -136,11 +136,17 @@ class Ui_MainWindow(object):
         self.help_grid.setFrameShape(QFrame.StyledPanel)
         self.help_grid.setFrameShadow(QFrame.Raised)
         self.gridLayout_2 = QGridLayout(self.help_grid)
+        self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
         self.label_20 = QLabel(self.help_grid)
         self.label_20.setObjectName(u"label_20")
 
         self.gridLayout_2.addWidget(self.label_20, 0, 0, 1, 1)
+
+        self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.gridLayout_2.addItem(self.verticalSpacer_4, 1, 0, 1, 1)
 
 
         self.verticalLayout_12.addWidget(self.help_grid)
@@ -664,6 +670,7 @@ class Ui_MainWindow(object):
 
         self.stackedWidget.setCurrentIndex(4)
         self.tabWidget.setCurrentIndex(0)
+        self.contacts_list.setCurrentRow(-1)
         self.tabWidget_3.setCurrentIndex(0)
 
 
@@ -679,7 +686,13 @@ class Ui_MainWindow(object):
         self.my_wallet_btn.setText(QCoreApplication.translate("MainWindow", u"my wallet", None))
         self.blockchain_btn.setText(QCoreApplication.translate("MainWindow", u"blockchain", None))
         self.help_btn.setText(QCoreApplication.translate("MainWindow", u"help", None))
-        self.label_20.setText(QCoreApplication.translate("MainWindow", u"for help, ask me.", None))
+        self.label_20.setText(QCoreApplication.translate("MainWindow", u"you can change your password from the \"settings\" page.\n"
+"to open this wallet on another machine, go to the settings page, copy your encrypted private key,\n"
+"and provide it at the \"already have a wallet, but not on this device\"\n"
+"to give someone coins, you have to add that person as a contact. after that, you can select the contact,\n"
+"and make transaction in the \"make transaction\" page.\n"
+"to delete or edit a contact, you have to select the contact.\n"
+"you can retrieve stake by sending a negative amount to the stake address.", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"your public key: ", None))
         self.public_key_lbl.setText(QCoreApplication.translate("MainWindow", u"public_key", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"your current balance: ", None))

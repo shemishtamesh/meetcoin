@@ -1,15 +1,11 @@
-from meetcoin import Transaction, Block
+from meetcoin_logic import Transaction, Block
 from meetcoin_utils import *
 from socket import *
-# TODO: request chain update_particle by broadcasting a request and then tcp connect to first x peers to get blocks from them, find incentive for people to actually send the blocks.
 
 
 if OS_NAME == "Linux":
-    import os
-    ifconfig_output = os.popen('ifconfig')
-    output = ifconfig_output.read()
-    relevant_section = output[output.find('enp0s3: '):output.find('  netmask')]
-    host_ip = relevant_section[relevant_section.find('inet ') + len('inet '):]
+    import netifaces as ni
+    host_ip = ni.ifaddresses('enp0s3')[ni.AF_INET][0]['addr']
 
 elif OS_NAME == "Windows":
     host_ip = gethostbyname(gethostname())
@@ -89,6 +85,7 @@ class Peer:
 
         if received_message == "request_update_connection" and sender_address[0] != host_ip:
             try:
+                self.close_client()
                 self.tcp_client = socket(AF_INET, SOCK_STREAM)
                 self.tcp_client.connect((sender_address[0], TCP_PORT))
                 return f"connected to {(sender_address[0], TCP_PORT)}"
